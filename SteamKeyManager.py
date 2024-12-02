@@ -5,10 +5,10 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QAction, QColor
 from PySide6.QtCore import Qt
+from pathlib import Path
 import json
 import sys
 import pyperclip
-from pathlib import Path
 import re
 import uuid
 import shutil
@@ -38,14 +38,14 @@ class Theme:
         if theme == "dark":
             return {
                 "main_background": "#2e2e2e",
-                "interactables_border_color": "#333333",
+                "interactables_border_color": "#404040",
                 "generic_border_color": "#4d4d4d",
                 "text_color": "white",
                 "add_games_background": "#404040",
                 "search_bar_background": "#404040",
                 "button_background": "#525252",
-                "button_hover": "#62a88e",
-                "button_pressed": "#51947c",
+                "button_hover": "#67736e",
+                "button_pressed": "#698c7e",
                 "checkbox_background_unchecked": "#444444",
                 "checkbox_background_checked": "#62a88e",
                 "table_background": "#333333",
@@ -53,34 +53,34 @@ class Theme:
                 "table_item_selected": "#62a88e",
                 "table_gridline_color": "#3d3d3d",
                 "header_background": "#444444",
-                "scrollbar_background": "#36423e",
+                "scrollbar_background": "#404040",
                 "scrollbar_handle": "#62a88e",
-                "found_games_background": "#404040",
+                "found_games_background": "#4d4d4d",
                 "combobox_background": "#525252",
                 "combobox_dropdown_background": "#444444", ##### Need to add this somewhere (not used)
             }
         else:
             return {
-                "main_background": "#ebebeb",
-                "interactables_border_color": "#cccccc",
-                "generic_border_color": "#cccccc",
+                "main_background": "#FFFFFF",
+                "interactables_border_color": "#d9d9d9",
+                "generic_border_color": "#d9e3f2",
                 "text_color": "black",
-                "add_games_background": "#ffffff",
-                "search_bar_background": "#ffffff",
-                "button_background": "#ffffff",
-                "button_hover": "#9fdfc6",
-                "button_pressed": "#b3e6d3",
-                "checkbox_background_unchecked": "#ffffff",
-                "checkbox_background_checked": "#83d6b8",
-                "table_background": "#ffffff",
+                "add_games_background": "#EDF2F9",
+                "search_bar_background": "#EDF2F9",
+                "button_background": "#e1e9f2",
+                "button_hover": "#d9e7fc",
+                "button_pressed": "#cadefc",
+                "checkbox_background_unchecked": "#dadfe6",
+                "checkbox_background_checked": "#a6c7ff",
+                "table_background": "#FFFFFF",
                 "table_border_color": "#cccccc",
-                "table_item_selected": "#83d6b8",
+                "table_item_selected": "#c8d6ea",
                 "table_gridline_color": "#dddddd",
                 "header_background": "#d9d9d9",
-                "scrollbar_background": "#cee0da",
-                "scrollbar_handle": "#83d6b8",
-                "found_games_background": "#ffffff",
-                "combobox_background": "#ffffff",
+                "scrollbar_background": "#e1e9f2",
+                "scrollbar_handle": "#a6c7ff",
+                "found_games_background": "#EDF2F9",
+                "combobox_background": "#e1ebfa",
                 "combobox_dropdown_background": "#d9f8ff", ##### Need to add this somewhere (not used)
             }
 
@@ -113,6 +113,7 @@ class Theme:
             QCheckBox::indicator:checked {{ background-color: {colors['checkbox_background_checked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
             QCheckBox::indicator:disabled {{ background-color: #ff4d4d; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
             QTableWidget {{ background-color: transparent; border: {LIMITED_BORDER_SIZE}px solid {colors['table_border_color']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
+            QTableWidget::title {{ background-color: {colors['table_background']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
             QTableWidget::item {{ background-color: {colors['table_background']}; }}
             QTableWidget::item:selected {{ background-color: {colors['table_item_selected']}; }}
             QScrollBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; margin: 0px; }}
@@ -169,7 +170,7 @@ class ColorConfigDialog(QDialog):
                 ("Game List Border", "table_border_color"),
             ]),
             ("Game List", [
-                ("Game Count Background", "found_games_background"),
+                ("Found Games Background", "found_games_background"),
                 ("Game List Background", "table_background"),
                 ("Game List Gridline", "table_gridline_color"),
                 ("Game List Selected Item", "table_item_selected"),
@@ -279,11 +280,11 @@ class ColorConfigDialog(QDialog):
             self.update_preview()
 
     def set_button_color(self, button, color_name):
-        button.setStyleSheet(f"background-color: {color_name}; color: {self.contrast_color(color_name)}; border: 2px solid #6e6e6e;")
+        button.setStyleSheet(f"background-color: {color_name}; color: {self.contrast_color(color_name)};")
 
     def update_default_button_style(self, button):
         text_color = "black" if self.theme == "light" else "white"
-        button.setStyleSheet(f"background-color: transparent; color: {text_color}; border: 2px solid #6e6e6e;")
+        button.setStyleSheet(f"color: {text_color};")
 
     def contrast_color(self, hex_color):
         r, g, b = int(hex_color[1:3], 16), int(hex_color[3:5], 16), int(hex_color[5:7], 16)
@@ -426,23 +427,24 @@ class SteamKeyManager(QMainWindow):
         # Add category filter drop-down
         self.category_filter = QComboBox()
         self.category_filter.setFixedHeight(BUTTON_HEIGHT)
-        self.category_filter.setFixedWidth(110)
+        self.category_filter.setFixedWidth(140)
         self.category_filter.addItem("All Categories")  # Filter for all games
         self.category_filter.addItems(self.categories)
         self.category_filter.currentTextChanged.connect(self.refresh_game_list)
         search_layout.addWidget(self.category_filter, 1)
         
-        # "Found Games *Count" label
+        # Found Games Count label
         self.found_count_label = QLabel("Found Games: 0")
         self.found_count_label.setObjectName("foundCountLabel")
+        self.found_count_label.setFixedHeight(BUTTON_HEIGHT)
         search_layout.addWidget(self.found_count_label)
 
         # Game list section
         self.table_widget = QTableWidget()
         self.table_widget.setColumnCount(3)
         self.table_widget.setHorizontalHeaderLabels(["Game Title", "Steam Key", "Category"])
-        self.table_widget.setColumnWidth(0, 400)  # Set width for the "Title" column
-        self.table_widget.setColumnWidth(1, 180)  # Set width for the "Steam Key" column
+        self.table_widget.setColumnWidth(0, 450)  # Set width for the "Title" column
+        self.table_widget.setColumnWidth(1, 200)  # Set width for the "Steam Key" column
         self.table_widget.setColumnWidth(2, 140)  # Set width for the "Category" column
         self.table_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # Enable horizontal scrollbar 
         self.table_widget.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -720,17 +722,34 @@ class SteamKeyManager(QMainWindow):
             
             added_count = 0
             added_titles = []
-            for game in imported_data:
-                title = game.get("title")
-                code = game.get("code")
-                category = game.get("category", "New")
-
-                # Check if the title and code exist and aren't duplicates
-                if title and code and not any(game["key"] == code for game in self.games.values()):
-                    unique_id = str(uuid.uuid4())
-                    self.games[unique_id] = {"title": title, "key": code, "category": category}
-                    added_count += 1
-                    added_titles.append(title)
+            existing_keys = {game["key"] for game in self.games.values()}
+            
+            if isinstance(imported_data, list):
+                # Current format: list of game objects
+                for game in imported_data:
+                    title = game.get("title")
+                    key = game.get("key")
+                    category = game.get("category", "New")
+                    if title and key and key not in existing_keys:
+                        unique_id = str(uuid.uuid4())
+                        self.games[unique_id] = {"title": title, "key": key, "category": category}
+                        added_count += 1
+                        added_titles.append(title)
+                        existing_keys.add(key)  # Update existing keys set
+            elif isinstance(imported_data, dict):
+                # Old format: object with game ids as keys
+                for game_id, game in imported_data.items():
+                    title = game.get("title")
+                    key = game.get("key")
+                    category = game.get("category", "New")
+                    if title and key and key not in existing_keys:
+                        unique_id = str(uuid.uuid4())
+                        self.games[unique_id] = {"title": title, "key": key, "category": category}
+                        added_count += 1
+                        added_titles.append(title)
+                        existing_keys.add(key)  # Update existing keys set
+            else:
+                raise ValueError("Unsupported import file format.")
             
             if added_count > 0:
                 added_titles_str = ", ".join(added_titles)
@@ -738,17 +757,16 @@ class SteamKeyManager(QMainWindow):
                 self.refresh_game_list()
                 QMessageBox.information(self, "Success", f"Successfully imported {added_count} game(s): {added_titles_str}")
             else:
-                QMessageBox.information(self, "Error", f"Didn't find any new games to import")
-
+                QMessageBox.information(self, "Info", "No new games to import.")
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to import games: {str(e)}")
-    
+
     def adjust_column_widths(self):
         if not self.games:
             return
         
         max_title_length = max(len(game["title"]) for game in self.games.values())
-        title_column_width = max_title_length * 5.8  # pixels per character
+        title_column_width = max_title_length * 10  # pixels per character
         self.table_widget.setColumnWidth(0, title_column_width)
     
     def load_data(self):
