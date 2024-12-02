@@ -22,8 +22,8 @@ DEFAULT_SR = 3 # Scrollbar Radius
 DEFAULT_SW = 12 # Scrollbar Width
 
 # Set specific styles to remove rounded corners where buttons touch
-COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
-COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
+COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-radius: 0px; border-right: 0px;"
+COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-left: 0px;"
 
 class Theme:
     def __init__(self, theme="dark", custom_colors=None, border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
@@ -233,8 +233,8 @@ class ColorConfigDialog(QDialog):
         button_layout.addWidget(reset_button)
         layout.addRow(label, button_layout)
         self.color_pickers[key] = button
-        button.setStyleSheet(f""" QPushButton {{{  COLOR_PICKER_BUTTON_STYLE }}} """)
-        reset_button.setStyleSheet(f""" QPushButton {{{ COLOR_RESET_BUTTON_STYLE}}}; """)
+        button.setStyleSheet(f""" QPushButton {{{ COLOR_PICKER_BUTTON_STYLE }}} """)
+        reset_button.setStyleSheet(f""" QPushButton {{{ COLOR_RESET_BUTTON_STYLE }}}; """)
 
         if color_name:
             self.set_button_color(button, color_name)
