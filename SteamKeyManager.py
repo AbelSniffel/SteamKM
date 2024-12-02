@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
-    QTextEdit, QTableWidget, QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit, QFileDialog, QComboBox,
-    QColorDialog, QDialog, QFormLayout, QGroupBox, QSpinBox, QSlider, QGridLayout, QScrollArea
+    QTextEdit, QTableWidget, QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit, 
+    QFileDialog, QComboBox, QColorDialog, QDialog, QFormLayout, QGroupBox, QSlider, QScrollArea
 )
 from PySide6.QtGui import QAction, QColor
 from PySide6.QtCore import Qt
@@ -14,12 +14,16 @@ import uuid
 import shutil
 
 # Constants for UI elements
-BUTTON_HEIGHT = 32
+BUTTON_HEIGHT = 33
 DEFAULT_BR = 5 # Border Radius
 DEFAULT_BS = 0 # Border Size
 DEFAULT_CR = 4 # Checkbox Radius
 DEFAULT_SR = 3 # Scrollbar Radius
 DEFAULT_SW = 12 # Scrollbar Width
+
+# Set specific styles to remove rounded corners where buttons touch
+COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-radius: 0px;"
+COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
 
 class Theme:
     def __init__(self, theme="dark", custom_colors=None, border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
@@ -67,7 +71,7 @@ class Theme:
                 "text_color": "black",
                 "add_games_background": "#EDF2F9",
                 "search_bar_background": "#EDF2F9",
-                "button_background": "#e1e9f2",
+                "button_background": "#e9eff7",
                 "button_hover": "#d9e7fc",
                 "button_pressed": "#cadefc",
                 "checkbox_background_unchecked": "#dadfe6",
@@ -75,7 +79,7 @@ class Theme:
                 "table_background": "#FFFFFF",
                 "table_border_color": "#cccccc",
                 "table_item_selected": "#c8d6ea",
-                "table_gridline_color": "#dddddd",
+                "table_gridline_color": "#e8e8e8",
                 "header_background": "#d9d9d9",
                 "scrollbar_background": "#e1e9f2",
                 "scrollbar_handle": "#a6c7ff",
@@ -134,7 +138,7 @@ class ColorConfigDialog(QDialog):
     def __init__(self, parent=None, current_colors=None, theme="dark", border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
         super().__init__(parent)
         self.setWindowTitle("Color Customization")
-        self.resize(475, 650)
+        self.resize(500, 700)
         self.theme = theme
         self.current_colors = current_colors if current_colors else {}
         self.border_radius = border_radius
@@ -210,20 +214,28 @@ class ColorConfigDialog(QDialog):
         group.setLayout(layout)
         for label, key in elements:
             self.add_color_picker(layout, label, key)
+            # Add a tooltip for clarity
+            layout.itemAt(layout.rowCount() - 1, QFormLayout.LabelRole).widget().setToolTip(f"Select or reset the {label} color.")
 
     def add_color_picker(self, layout, label, key):
         color_name = self.current_colors.get(key, "")
         button = QPushButton(color_name or "Default")
-        button.setFixedHeight(BUTTON_HEIGHT)
+        button.setFixedSize(150, BUTTON_HEIGHT)
         button.clicked.connect(lambda checked, btn=button, k=key: self.choose_color(btn, k))
         reset_button = QPushButton("X")
         reset_button.setFixedSize(BUTTON_HEIGHT + 2, BUTTON_HEIGHT)
         reset_button.clicked.connect(lambda checked, btn=button, k=key: self.reset_color(btn, k))
+        
         button_layout = QHBoxLayout()
+        button_layout.setSpacing(0)
+        button_layout.addStretch()
         button_layout.addWidget(button)
         button_layout.addWidget(reset_button)
         layout.addRow(label, button_layout)
         self.color_pickers[key] = button
+        button.setStyleSheet(f""" QPushButton {{{  COLOR_PICKER_BUTTON_STYLE }}} """)
+        reset_button.setStyleSheet(f""" QPushButton {{{ COLOR_RESET_BUTTON_STYLE}}}; """)
+
         if color_name:
             self.set_button_color(button, color_name)
         else:
@@ -280,11 +292,11 @@ class ColorConfigDialog(QDialog):
             self.update_preview()
 
     def set_button_color(self, button, color_name):
-        button.setStyleSheet(f"background-color: {color_name}; color: {self.contrast_color(color_name)};")
+        button.setStyleSheet(f"background-color: {color_name}; color: {self.contrast_color(color_name)}; {COLOR_PICKER_BUTTON_STYLE};")
 
     def update_default_button_style(self, button):
         text_color = "black" if self.theme == "light" else "white"
-        button.setStyleSheet(f"color: {text_color};")
+        button.setStyleSheet(f"color: {text_color}; {COLOR_PICKER_BUTTON_STYLE};")
 
     def contrast_color(self, hex_color):
         r, g, b = int(hex_color[1:3], 16), int(hex_color[3:5], 16), int(hex_color[5:7], 16)
