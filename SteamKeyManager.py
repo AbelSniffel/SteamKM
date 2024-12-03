@@ -33,60 +33,37 @@ class Theme:
         self.checkbox_radius = checkbox_radius
         self.scroll_radius = scroll_radius
         self.scrollbar_width = scrollbar_width
-        self.default_colors = self.get_theme_colors(theme)  # Store default theme colors
-        self.colors = self.default_colors.copy()  # Start with default theme colors
+        self.colors = self.get_theme_colors(theme)  # Get colors based on the theme
         if custom_colors:
             self.colors.update(custom_colors)  # Update with custom colors
 
     def get_theme_colors(self, theme):
-        if theme == "dark":
-            return {
-                "main_background": "#2e2e2e",
-                "interactables_border_color": "#404040",
-                "generic_border_color": "#4d4d4d",
-                "text_color": "white",
-                "add_games_background": "#404040",
-                "search_bar_background": "#404040",
-                "button_background": "#525252",
-                "button_hover": "#67736e",
-                "button_pressed": "#698c7e",
-                "checkbox_background_unchecked": "#444444",
-                "checkbox_background_checked": "#62a88e",
-                "table_background": "#333333",
-                "table_border_color": "#4d4d4d",
-                "table_item_selected": "#62a88e",
-                "table_gridline_color": "#3d3d3d",
-                "header_background": "#444444",
-                "scrollbar_background": "#404040",
-                "scrollbar_handle": "#62a88e",
-                "found_games_background": "#4d4d4d",
-                "combobox_background": "#525252",
-                "combobox_dropdown_background": "#444444", ##### Need to add this somewhere (not used)
-            }
-        else:
-            return {
-                "main_background": "#FFFFFF",
-                "interactables_border_color": "#d9d9d9",
-                "generic_border_color": "#d9e3f2",
-                "text_color": "black",
-                "add_games_background": "#EDF2F9",
-                "search_bar_background": "#EDF2F9",
-                "button_background": "#e9eff7",
-                "button_hover": "#d9e7fc",
-                "button_pressed": "#cadefc",
-                "checkbox_background_unchecked": "#dadfe6",
-                "checkbox_background_checked": "#a6c7ff",
-                "table_background": "#FFFFFF",
-                "table_border_color": "#cccccc",
-                "table_item_selected": "#c8d6ea",
-                "table_gridline_color": "#e8e8e8",
-                "header_background": "#d9d9d9",
-                "scrollbar_background": "#e1e9f2",
-                "scrollbar_handle": "#a6c7ff",
-                "found_games_background": "#EDF2F9",
-                "combobox_background": "#e1ebfa",
-                "combobox_dropdown_background": "#d9f8ff", ##### Need to add this somewhere (not used)
-            }
+        # Index 0: dark theme, Index 1: light theme
+        colors = {
+            "main_background": ("#2e2e2e", "#FFFFFF"),
+            "interactables_border_color": ("#404040", "#d9d9d9"),
+            "generic_border_color": ("#4d4d4d", "#d9e3f2"),
+            "text_color": ("white", "black"),
+            "add_games_background": ("#404040", "#EDF2F9"),
+            "search_bar_background": ("#404040", "#EDF2F9"),
+            "button_background": ("#525252", "#e9eff7"),
+            "button_hover": ("#67736e", "#d9e7fc"),
+            "button_pressed": ("#698c7e", "#cadefc"),
+            "checkbox_background_unchecked": ("#444444", "#dadfe6"),
+            "checkbox_background_checked": ("#62a88e", "#a6c7ff"),
+            "table_background": ("#333333", "#FFFFFF"),
+            "table_border_color": ("#4d4d4d", "#cccccc"),
+            "table_item_selected": ("#62a88e", "#c8d6ea"),
+            "table_gridline_color": ("#3d3d3d", "#e8e8e8"),
+            "header_background": ("#444444", "#d9d9d9"),
+            "scrollbar_background": ("#404040", "#e1e9f2"),
+            "scrollbar_handle": ("#62a88e", "#a6c7ff"),
+            "found_games_background": ("#4d4d4d", "#EDF2F9"),
+            "combobox_background": ("#525252", "#e1ebfa"),
+            "combobox_dropdown_background": ("#444444", "#d9f8ff"),
+        }
+        theme_index = 0 if theme == "dark" else 1
+        return {key: value[theme_index] for key, value in colors.items()}
 
     def generate_stylesheet(self):
         colors = self.colors
@@ -455,7 +432,7 @@ class SteamKeyManager(QMainWindow):
         self.table_widget = QTableWidget()
         self.table_widget.setColumnCount(3)
         self.table_widget.setHorizontalHeaderLabels(["Game Title", "Steam Key", "Category"])
-        self.table_widget.setColumnWidth(0, 450)  # Set width for the "Title" column
+        self.table_widget.setColumnWidth(0, 400)  # Set width for the "Title" column
         self.table_widget.setColumnWidth(1, 200)  # Set width for the "Steam Key" column
         self.table_widget.setColumnWidth(2, 140)  # Set width for the "Category" column
         self.table_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # Enable horizontal scrollbar 
@@ -606,9 +583,6 @@ class SteamKeyManager(QMainWindow):
             self.table_widget.setItem(i, 0, title_item)
             self.table_widget.setItem(i, 1, key_item)
             self.table_widget.setItem(i, 2, category_item)
-
-        # Adjust column widths based on content
-        self.adjust_column_widths()
 
     def show_context_menu(self, position):
         menu = QMenu()
@@ -772,14 +746,6 @@ class SteamKeyManager(QMainWindow):
                 QMessageBox.information(self, "Info", "No new games to import.")
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to import games: {str(e)}")
-
-    def adjust_column_widths(self):
-        if not self.games:
-            return
-        
-        max_title_length = max(len(game["title"]) for game in self.games.values())
-        title_column_width = max_title_length * 10  # pixels per character
-        self.table_widget.setColumnWidth(0, title_column_width)
     
     def load_data(self):
         if self.data_file.exists():
@@ -796,7 +762,6 @@ class SteamKeyManager(QMainWindow):
             shutil.copy(self.data_file, backup_file)
         with open(self.data_file, 'w') as file:
             json.dump(self.games, file, indent=4)
-        self.adjust_column_widths()
 
     def manual_backup(self):
         options = QFileDialog.Options()
