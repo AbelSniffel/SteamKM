@@ -532,7 +532,7 @@ class SteamKeyManager(QMainWindow):
     def check_updates(self):
         latest_version = check_for_updates()
         if latest_version:
-            reply = QMessageBox.question(self, "New Version Available", f"Version {latest_version} is available. Do you want to update?",
+            reply = QMessageBox.question(self, "New Version Available", f"New {latest_version} is available. Do you want to update?",
                                         QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 download_update(latest_version)
