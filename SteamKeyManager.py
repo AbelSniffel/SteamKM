@@ -12,18 +12,42 @@ import pyperclip
 import re
 import uuid
 import shutil
+import requests
+import os
+import subprocess
 
-# Constants for UI elements
+CURRENT_VERSION = "1.0.0"
+
 BUTTON_HEIGHT = 33
 DEFAULT_BR = 5 # Border Radius
 DEFAULT_BS = 0 # Border Size
 DEFAULT_CR = 4 # Checkbox Radius
 DEFAULT_SR = 3 # Scrollbar Radius
 DEFAULT_SW = 12 # Scrollbar Width
-
-# Set specific styles to remove rounded corners where buttons touch
 COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-radius: 0px; border-right: 0px;"
 COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-left: 0px;"
+
+def check_for_updates():
+    response = requests.get("https://api.github.com/repos/your_username/your_repo/releases/latest")
+    latest_version = response.json().get("tag_name", "0.0.0")
+    if latest_version > CURRENT_VERSION:
+        return latest_version
+    return None
+
+def download_update(latest_version):
+    release_url = f"https://api.github.com/repos/your_username/your_repo/releases/tags/{latest_version}"
+    response = requests.get(release_url)
+    assets = response.json().get("assets", [])
+    for asset in assets:
+        if asset.get("name") == "steam_key_manager{CURRENT_VERSION}.py":
+            download_url = asset.get("browser_download_url")
+            script_path = os.path.realpath(__file__)
+            update_path = script_path + ".new"
+            with open(update_path, 'wb') as f:
+                f.write(requests.get(download_url).content)
+            os.replace(update_path, script_path)
+            subprocess.Popen(['python', script_path])
+            sys.exit()
 
 class Theme:
     def __init__(self, theme="dark", custom_colors=None, border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
@@ -41,26 +65,29 @@ class Theme:
         # Index 0: dark theme, Index 1: light theme
         colors = {
             "main_background": ("#2e2e2e", "#FFFFFF"),
-            "interactables_border_color": ("#404040", "#d9d9d9"),
-            "generic_border_color": ("#4d4d4d", "#d9e3f2"),
             "text_color": ("white", "black"),
             "add_games_background": ("#404040", "#EDF2F9"),
             "search_bar_background": ("#404040", "#EDF2F9"),
-            "button_background": ("#525252", "#e9eff7"),
-            "button_hover": ("#67736e", "#d9e7fc"),
-            "button_pressed": ("#698c7e", "#cadefc"),
+            "found_games_background": ("#404040", "#EDF2F9"),
+            "scrollbar_background": ("#404040", "#e1e9f2"),
+            "scrollbar_handle": ("#62a88e", "#a6c7ff"),
+            "button_background": ("#525252", "#e4eefb"),
+            "button_hover": ("#67736e", "#c8defa"),
+            "button_pressed": ("#698c7e", "#b3d3fc"),
+            "reset_button_background": ("#ff6666", "#facdcd"),
+            "reset_button_hover": ("#ff9999", "#ff9999"),
+            "reset_button_pressed": ("#ff4d4d", "#ff6666"),
             "checkbox_background_unchecked": ("#444444", "#dadfe6"),
             "checkbox_background_checked": ("#62a88e", "#a6c7ff"),
             "table_background": ("#333333", "#FFFFFF"),
             "table_border_color": ("#4d4d4d", "#cccccc"),
-            "table_item_selected": ("#62a88e", "#c8d6ea"),
+            "table_item_selected": ("#62a88e", "#a6c7ff"),
             "table_gridline_color": ("#3d3d3d", "#e8e8e8"),
             "header_background": ("#444444", "#d9d9d9"),
-            "scrollbar_background": ("#404040", "#e1e9f2"),
-            "scrollbar_handle": ("#62a88e", "#a6c7ff"),
-            "found_games_background": ("#4d4d4d", "#EDF2F9"),
             "combobox_background": ("#525252", "#e1ebfa"),
             "combobox_dropdown_background": ("#444444", "#d9f8ff"),
+            "interactables_border_color": ("#404040", "#d9e3f2"),
+            "generic_border_color": ("#4d4d4d", "#d9e3f2"),
         }
         theme_index = 0 if theme == "dark" else 1
         return {key: value[theme_index] for key, value in colors.items()}
@@ -89,6 +116,9 @@ class Theme:
             QPushButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']};  padding: {PADDING}px 10px; }}
             QPushButton:hover {{ background-color: {colors['button_hover']}; }}
             QPushButton:pressed {{ background-color: {colors['button_pressed']}; }}
+            QPushButton#resetButton {{ background-color: {colors['reset_button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding: {PADDING}px 10px; }}
+            QPushButton#resetButton:hover {{ background-color: {colors['reset_button_hover']}; }}
+            QPushButton#resetButton:pressed {{ background-color: {colors['reset_button_pressed']}; }}
             QCheckBox::indicator {{ width: 15px; height: 15px; }}
             QCheckBox::indicator:unchecked {{ background-color: {colors['checkbox_background_unchecked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
             QCheckBox::indicator:checked {{ background-color: {colors['checkbox_background_checked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
@@ -200,6 +230,7 @@ class ColorConfigDialog(QDialog):
         button.setFixedSize(150, BUTTON_HEIGHT)
         button.clicked.connect(lambda checked, btn=button, k=key: self.choose_color(btn, k))
         reset_button = QPushButton("X")
+        reset_button.setObjectName("resetButton")
         reset_button.setFixedSize(BUTTON_HEIGHT + 2, BUTTON_HEIGHT)
         reset_button.clicked.connect(lambda checked, btn=button, k=key: self.reset_color(btn, k))
         
@@ -211,7 +242,7 @@ class ColorConfigDialog(QDialog):
         layout.addRow(label, button_layout)
         self.color_pickers[key] = button
         button.setStyleSheet(f""" QPushButton {{{ COLOR_PICKER_BUTTON_STYLE }}} """)
-        reset_button.setStyleSheet(f""" QPushButton {{{ COLOR_RESET_BUTTON_STYLE }}}; """)
+        reset_button.setStyleSheet(f""" QPushButton {{{ COLOR_RESET_BUTTON_STYLE }}} """)
 
         if color_name:
             self.set_button_color(button, color_name)
@@ -243,6 +274,7 @@ class ColorConfigDialog(QDialog):
         slider.valueChanged.connect(update_func)
         value_label = QLabel(str(getattr(self, key)))
         reset_button = QPushButton("X")
+        reset_button.setObjectName("resetButton")
         reset_button.setFixedSize(BUTTON_HEIGHT + 2, BUTTON_HEIGHT)
         reset_button.clicked.connect(lambda checked, s=slider, d=default_val, v=value_label: self.reset_slider(s, d, v))
         slider_layout = QHBoxLayout()
@@ -384,6 +416,7 @@ class SteamKeyManager(QMainWindow):
 
         # Buttons
         self.color_config_button = self.create_button("Customize", BUTTON_HEIGHT, self.open_color_config_dialog)
+        self.update_button = self.create_button("Check for Updates", BUTTON_HEIGHT, self.check_updates)
         self.import_button = self.create_button("Import Games", BUTTON_HEIGHT, self.import_games)
         self.backup_button = self.create_button("Manual Backup", BUTTON_HEIGHT, self.manual_backup)
         self.add_button = self.create_button("Add Games", 75, self.add_games)
@@ -393,6 +426,7 @@ class SteamKeyManager(QMainWindow):
         theme_layout.addWidget(self.color_config_button)
         theme_layout.addWidget(self.import_button)
         theme_layout.addWidget(self.backup_button)
+        theme_layout.addWidget(self.update_button)
         add_button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.toggle_keys_button)
         button_layout.addWidget(self.copy_button)
@@ -467,6 +501,16 @@ class SteamKeyManager(QMainWindow):
         button.setFixedHeight(height)
         button.clicked.connect(slot)
         return button
+
+    def check_updates(self):
+        latest_version = check_for_updates()
+        if latest_version:
+            reply = QMessageBox.question(self, "New Version Available", f"Version {latest_version} is available. Do you want to update?",
+                                        QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                download_update(latest_version)
+        else:
+            QMessageBox.information(self, "Update Check", "You are already using the latest version.")
 
     def toggle_default_theme(self):
         self.theme = "dark" if self.theme_switch.isChecked() else "light"
@@ -708,34 +752,31 @@ class SteamKeyManager(QMainWindow):
             
             added_count = 0
             added_titles = []
-            existing_keys = {game["key"] for game in self.games.values()}
             
             if isinstance(imported_data, list):
-                # Current format: list of game objects
+                # Old format: list of dictionaries
                 for game in imported_data:
                     title = game.get("title")
-                    key = game.get("key")
+                    code = game.get("code")
                     category = game.get("category", "New")
-                    if title and key and key not in existing_keys:
+
+                    if title and code and not any(game["key"] == code for game in self.games.values()):
                         unique_id = str(uuid.uuid4())
-                        self.games[unique_id] = {"title": title, "key": key, "category": category}
+                        self.games[unique_id] = {"title": title, "key": code, "category": category}
                         added_count += 1
                         added_titles.append(title)
-                        existing_keys.add(key)  # Update existing keys set
+            
             elif isinstance(imported_data, dict):
-                # Old format: object with game ids as keys
-                for game_id, game in imported_data.items():
+                # New format: dictionary with unique IDs as keys
+                for unique_id, game in imported_data.items():
                     title = game.get("title")
-                    key = game.get("key")
+                    code = game.get("key")
                     category = game.get("category", "New")
-                    if title and key and key not in existing_keys:
-                        unique_id = str(uuid.uuid4())
-                        self.games[unique_id] = {"title": title, "key": key, "category": category}
+
+                    if title and code and not any(game["key"] == code for game in self.games.values()):
+                        self.games[unique_id] = {"title": title, "key": code, "category": category}
                         added_count += 1
                         added_titles.append(title)
-                        existing_keys.add(key)  # Update existing keys set
-            else:
-                raise ValueError("Unsupported import file format.")
             
             if added_count > 0:
                 added_titles_str = ", ".join(added_titles)
@@ -743,7 +784,8 @@ class SteamKeyManager(QMainWindow):
                 self.refresh_game_list()
                 QMessageBox.information(self, "Success", f"Successfully imported {added_count} game(s): {added_titles_str}")
             else:
-                QMessageBox.information(self, "Info", "No new games to import.")
+                QMessageBox.information(self, "Error", f"Didn't find any new games to import")
+
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to import games: {str(e)}")
     
