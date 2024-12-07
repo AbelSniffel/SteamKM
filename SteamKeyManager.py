@@ -7,7 +7,6 @@ from PySide6.QtGui import QAction, QColor
 from PySide6.QtCore import Qt
 from pathlib import Path
 import json
-import sys
 import pyperclip
 import re
 import uuid
@@ -15,8 +14,9 @@ import shutil
 import requests
 import os
 import subprocess
+import sys
 
-RELEASE_BUILD = "1.01"
+RELEASE_BUILD = "1.00"
 
 BUTTON_HEIGHT = 33
 DEFAULT_BR = 5 # Border Radius
@@ -40,20 +40,36 @@ def check_for_updates():
 
 def download_update(latest_version):
     try:
-        release_url = f"https://api.github.com/repos/AbelSniffel/SteamKeyManager/releases/tags/{latest_version}"
+        release_url = f"https://api.github.com/repos/AbelSniffel/Steam-Key-Manager/releases/tags/{latest_version}"
         response = requests.get(release_url)
         response.raise_for_status()  # Raise an error for bad responses (4xx and 5xx)
         assets = response.json().get("assets", [])
+        
+        # Debugging: Print available assets
+        print(f"Available assets for version {latest_version}:")
         for asset in assets:
-            if asset.get("name") == f"SteamKeyManager.py":  # Use the latest_version in the filename
+            print(asset.get("name"))
+        
+        for asset in assets:
+            if asset.get("name") == "SteamKeyManager.py":  # Use the correct filename
                 download_url = asset.get("browser_download_url")
                 script_path = os.path.realpath(__file__)
                 update_path = script_path + ".new"
                 with open(update_path, 'wb') as f:
                     f.write(requests.get(download_url).content)
-                os.replace(update_path, script_path)
-                subprocess.Popen(['python', script_path])
-                sys.exit()
+                
+                # Rename the current script to a backup
+                backup_path = script_path + ".bak"
+                if os.path.exists(backup_path):
+                    os.remove(backup_path)
+                os.rename(script_path, backup_path)
+                
+                # Rename the new script to the current script name
+                os.rename(update_path, script_path)
+                
+                QMessageBox.information(None, "Update Success", f"Update to version {latest_version} successful. Please restart the application.")
+                return
+        
         QMessageBox.critical(None, "Update Error", f"No matching asset found for version {latest_version}")
     except requests.exceptions.RequestException as e:
         QMessageBox.critical(None, "Update Error", f"Failed to download update: {e}")
@@ -516,7 +532,7 @@ class SteamKeyManager(QMainWindow):
     def check_updates(self):
         latest_version = check_for_updates()
         if latest_version:
-            reply = QMessageBox.question(self, "New Version Available", f"New {latest_version} is available. Do you want to update?",
+            reply = QMessageBox.question(self, "New Version Available", f"Version {latest_version} is available. Do you want to update?",
                                         QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 download_update(latest_version)
