@@ -16,7 +16,7 @@ import requests
 import os
 import subprocess
 
-CURRENT_VERSION = "1.0.0"
+RELEASE_BUILD = "1.00"
 
 BUTTON_HEIGHT = 33
 DEFAULT_BR = 5 # Border Radius
@@ -28,18 +28,18 @@ COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-r
 COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-left: 0px;"
 
 def check_for_updates():
-    response = requests.get("https://api.github.com/repos/your_username/your_repo/releases/latest")
-    latest_version = response.json().get("tag_name", "0.0.0")
-    if latest_version > CURRENT_VERSION:
+    response = requests.get("https://api.github.com/repos/AbelSniffel/Steam-Key-Manager/releases/latest")
+    latest_version = response.json().get("tag_name", "0.00")
+    if latest_version > RELEASE_BUILD:
         return latest_version
     return None
 
 def download_update(latest_version):
-    release_url = f"https://api.github.com/repos/your_username/your_repo/releases/tags/{latest_version}"
+    release_url = f"https://api.github.com/repos/AbelSniffel/Steam-Key-Manager/releases/tags/{latest_version}"
     response = requests.get(release_url)
     assets = response.json().get("assets", [])
     for asset in assets:
-        if asset.get("name") == "steam_key_manager{CURRENT_VERSION}.py":
+        if asset.get("name") == "steam_key_manager_V{RELEASE_BUILD}.py":
             download_url = asset.get("browser_download_url")
             script_path = os.path.realpath(__file__)
             update_path = script_path + ".new"
@@ -510,7 +510,7 @@ class SteamKeyManager(QMainWindow):
             if reply == QMessageBox.Yes:
                 download_update(latest_version)
         else:
-            QMessageBox.information(self, "Update Check", "You are already using the latest version.")
+            QMessageBox.information(self, "Update Check", f"You're already on the latest Release Build {RELEASE_BUILD}")
 
     def toggle_default_theme(self):
         self.theme = "dark" if self.theme_switch.isChecked() else "light"
