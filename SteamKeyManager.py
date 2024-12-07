@@ -16,7 +16,7 @@ import requests
 import os
 import subprocess
 
-RELEASE_BUILD = "1.00"
+RELEASE_BUILD = "1.01"
 
 BUTTON_HEIGHT = 33
 DEFAULT_BR = 5 # Border Radius
@@ -29,7 +29,7 @@ COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radi
 
 def check_for_updates():
     try:
-        response = requests.get("https://api.github.com/repos/AbelSniffel/Steam-Key-Manager/releases/latest")
+        response = requests.get("https://api.github.com/repos/AbelSniffel/SteamKeyManager/releases/latest")
         response.raise_for_status()  # Raise an error for bad responses (4xx and 5xx)
         latest_version = response.json().get("tag_name", "0.00")
         if latest_version > RELEASE_BUILD:
@@ -40,12 +40,12 @@ def check_for_updates():
 
 def download_update(latest_version):
     try:
-        release_url = f"https://api.github.com/repos/AbelSniffel/Steam-Key-Manager/releases/tags/{latest_version}"
+        release_url = f"https://api.github.com/repos/AbelSniffel/SteamKeyManager/releases/tags/{latest_version}"
         response = requests.get(release_url)
         response.raise_for_status()  # Raise an error for bad responses (4xx and 5xx)
         assets = response.json().get("assets", [])
         for asset in assets:
-            if asset.get("name") == f"steam_key_manager_V{latest_version}.py":  # Use the latest_version in the filename
+            if asset.get("name") == f"SteamKeyManager.py":  # Use the latest_version in the filename
                 download_url = asset.get("browser_download_url")
                 script_path = os.path.realpath(__file__)
                 update_path = script_path + ".new"
@@ -54,8 +54,11 @@ def download_update(latest_version):
                 os.replace(update_path, script_path)
                 subprocess.Popen(['python', script_path])
                 sys.exit()
+        QMessageBox.critical(None, "Update Error", f"No matching asset found for version {latest_version}")
     except requests.exceptions.RequestException as e:
         QMessageBox.critical(None, "Update Error", f"Failed to download update: {e}")
+    except Exception as e:
+        QMessageBox.critical(None, "Update Error", f"An error occurred: {e}")
 
 class Theme:
     def __init__(self, theme="dark", custom_colors=None, border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
@@ -513,7 +516,7 @@ class SteamKeyManager(QMainWindow):
     def check_updates(self):
         latest_version = check_for_updates()
         if latest_version:
-            reply = QMessageBox.question(self, "New Version Available", f"Version {latest_version} is available. Do you want to update?",
+            reply = QMessageBox.question(self, "New Version Available", f"New {latest_version} is available. Do you want to update?",
                                         QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 download_update(latest_version)
