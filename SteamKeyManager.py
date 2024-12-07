@@ -28,26 +28,34 @@ COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-r
 COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-left: 0px;"
 
 def check_for_updates():
-    response = requests.get("https://api.github.com/repos/AbelSniffel/Steam-Key-Manager/releases/latest")
-    latest_version = response.json().get("tag_name", "0.00")
-    if latest_version > RELEASE_BUILD:
-        return latest_version
+    try:
+        response = requests.get("https://api.github.com/repos/AbelSniffel/Steam-Key-Manager/releases/latest")
+        response.raise_for_status()  # Raise an error for bad responses (4xx and 5xx)
+        latest_version = response.json().get("tag_name", "0.00")
+        if latest_version > RELEASE_BUILD:
+            return latest_version
+    except requests.exceptions.RequestException as e:
+        QMessageBox.critical(None, "Update Error", f"Failed to check for updates: {e}")
     return None
 
 def download_update(latest_version):
-    release_url = f"https://api.github.com/repos/AbelSniffel/Steam-Key-Manager/releases/tags/{latest_version}"
-    response = requests.get(release_url)
-    assets = response.json().get("assets", [])
-    for asset in assets:
-        if asset.get("name") == "steam_key_manager_V{RELEASE_BUILD}.py":
-            download_url = asset.get("browser_download_url")
-            script_path = os.path.realpath(__file__)
-            update_path = script_path + ".new"
-            with open(update_path, 'wb') as f:
-                f.write(requests.get(download_url).content)
-            os.replace(update_path, script_path)
-            subprocess.Popen(['python', script_path])
-            sys.exit()
+    try:
+        release_url = f"https://api.github.com/repos/AbelSniffel/Steam-Key-Manager/releases/tags/{latest_version}"
+        response = requests.get(release_url)
+        response.raise_for_status()  # Raise an error for bad responses (4xx and 5xx)
+        assets = response.json().get("assets", [])
+        for asset in assets:
+            if asset.get("name") == f"steam_key_manager_V{latest_version}.py":  # Use the latest_version in the filename
+                download_url = asset.get("browser_download_url")
+                script_path = os.path.realpath(__file__)
+                update_path = script_path + ".new"
+                with open(update_path, 'wb') as f:
+                    f.write(requests.get(download_url).content)
+                os.replace(update_path, script_path)
+                subprocess.Popen(['python', script_path])
+                sys.exit()
+    except requests.exceptions.RequestException as e:
+        QMessageBox.critical(None, "Update Error", f"Failed to download update: {e}")
 
 class Theme:
     def __init__(self, theme="dark", custom_colors=None, border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
