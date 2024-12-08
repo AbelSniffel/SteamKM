@@ -1,22 +1,22 @@
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
     QTextEdit, QTableWidget, QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit, 
-    QFileDialog, QComboBox, QColorDialog, QDialog, QFormLayout, QGroupBox, QSlider, QScrollArea
+    QFileDialog, QComboBox, QColorDialog, QDialog, QFormLayout, QGroupBox, QSlider, QScrollArea, QSpacerItem, QSizePolicy
 )
-from PySide6.QtGui import QAction, QColor
-from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QColor, QIcon
+from PySide6.QtCore import Qt, QPoint
 from pathlib import Path
 import json
+import sys
 import pyperclip
 import re
 import uuid
 import shutil
-import requests
-import os
-import subprocess
-import sys
 
-RELEASE_BUILD = "1.00"
+from SteamKeyManager_Updater import check_for_updates, download_update
+from SteamKeyManager_Themes import Theme
+
+RELEASE_BUILD = "1.2"
 
 BUTTON_HEIGHT = 33
 DEFAULT_BR = 5 # Border Radius
@@ -26,147 +26,6 @@ DEFAULT_SR = 3 # Scrollbar Radius
 DEFAULT_SW = 12 # Scrollbar Width
 COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-radius: 0px; border-right: 0px;"
 COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-left: 0px;"
-
-def check_for_updates():
-    try:
-        response = requests.get("https://api.github.com/repos/AbelSniffel/SteamKeyManager/releases/latest")
-        response.raise_for_status()  # Raise an error for bad responses (4xx and 5xx)
-        latest_version = response.json().get("tag_name", "0.00")
-        if latest_version > RELEASE_BUILD:
-            return latest_version
-    except requests.exceptions.RequestException as e:
-        QMessageBox.critical(None, "Update Error", f"Failed to check for updates: {e}")
-    return None
-
-def download_update(latest_version):
-    try:
-        release_url = f"https://api.github.com/repos/AbelSniffel/Steam-Key-Manager/releases/tags/{latest_version}"
-        response = requests.get(release_url)
-        response.raise_for_status()  # Raise an error for bad responses (4xx and 5xx)
-        assets = response.json().get("assets", [])
-        
-        # Debugging: Print available assets
-        print(f"Available assets for version {latest_version}:")
-        for asset in assets:
-            print(asset.get("name"))
-        
-        for asset in assets:
-            if asset.get("name") == "SteamKeyManager.py":  # Use the correct filename
-                download_url = asset.get("browser_download_url")
-                script_path = os.path.realpath(__file__)
-                update_path = script_path + ".new"
-                with open(update_path, 'wb') as f:
-                    f.write(requests.get(download_url).content)
-                
-                # Rename the current script to a backup
-                backup_path = script_path + ".bak"
-                if os.path.exists(backup_path):
-                    os.remove(backup_path)
-                os.rename(script_path, backup_path)
-                
-                # Rename the new script to the current script name
-                os.rename(update_path, script_path)
-                
-                QMessageBox.information(None, "Update Success", f"Update to version {latest_version} successful. Please restart the application.")
-                return
-        
-        QMessageBox.critical(None, "Update Error", f"No matching asset found for version {latest_version}")
-    except requests.exceptions.RequestException as e:
-        QMessageBox.critical(None, "Update Error", f"Failed to download update: {e}")
-    except Exception as e:
-        QMessageBox.critical(None, "Update Error", f"An error occurred: {e}")
-
-class Theme:
-    def __init__(self, theme="dark", custom_colors=None, border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
-        self.theme = theme
-        self.border_radius = border_radius
-        self.border_size = border_size
-        self.checkbox_radius = checkbox_radius
-        self.scroll_radius = scroll_radius
-        self.scrollbar_width = scrollbar_width
-        self.colors = self.get_theme_colors(theme)  # Get colors based on the theme
-        if custom_colors:
-            self.colors.update(custom_colors)  # Update with custom colors
-
-    def get_theme_colors(self, theme):
-        # Index 0: dark theme, Index 1: light theme
-        colors = {
-            "main_background": ("#2e2e2e", "#FFFFFF"),
-            "text_color": ("white", "black"),
-            "add_games_background": ("#404040", "#EDF2F9"),
-            "search_bar_background": ("#404040", "#EDF2F9"),
-            "found_games_background": ("#404040", "#EDF2F9"),
-            "scrollbar_background": ("#404040", "#e1e9f2"),
-            "scrollbar_handle": ("#62a88e", "#a6c7ff"),
-            "button_background": ("#525252", "#e4eefb"),
-            "button_hover": ("#67736e", "#c8defa"),
-            "button_pressed": ("#698c7e", "#b3d3fc"),
-            "reset_button_background": ("#ff6666", "#facdcd"),
-            "reset_button_hover": ("#ff9999", "#ff9999"),
-            "reset_button_pressed": ("#ff4d4d", "#ff6666"),
-            "checkbox_background_unchecked": ("#444444", "#dadfe6"),
-            "checkbox_background_checked": ("#62a88e", "#a6c7ff"),
-            "table_background": ("#333333", "#FFFFFF"),
-            "table_border_color": ("#4d4d4d", "#cccccc"),
-            "table_item_selected": ("#62a88e", "#a6c7ff"),
-            "table_gridline_color": ("#3d3d3d", "#e8e8e8"),
-            "header_background": ("#444444", "#d9d9d9"),
-            "combobox_background": ("#525252", "#e1ebfa"),
-            "combobox_dropdown_background": ("#444444", "#d9f8ff"),
-            "interactables_border_color": ("#404040", "#d9e3f2"),
-            "generic_border_color": ("#4d4d4d", "#d9e3f2"),
-        }
-        theme_index = 0 if theme == "dark" else 1
-        return {key: value[theme_index] for key, value in colors.items()}
-
-    def generate_stylesheet(self):
-        colors = self.colors
-        CHECKBOX_RADIUS = str(self.checkbox_radius)
-        BORDER_RADIUS = str(self.border_radius)
-        BORDER_SIZE = str(self.border_size)
-        LIMITED_BORDER_SIZE = str(max(self.border_size, 2))
-        SCROLL_RADIUS = str(self.scroll_radius)
-        SCROLLBAR_WIDTH = str(self.scrollbar_width)
-        PADDING = "5"
-
-        theme_stylesheet = f"""
-            QWidget {{ background-color: {colors['main_background']}; color: {colors['text_color']}; border-radius: {BORDER_RADIUS}px }}
-            #foundCountLabel {{ background-color: {colors['found_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
-            QTextEdit {{ background-color: {colors['add_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
-            QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
-            QComboBox {{  background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding: {PADDING}px; }}
-            QComboBox::drop-down {{ height: 0px; }}
-            QComboBox QAbstractItemView {{ background-color: {colors['combobox_background']};  border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; margin-top: 5px; padding: {PADDING}px; selection-background-color: {colors['table_item_selected']}; selection-color: {colors['table_item_selected']}; }}
-            QComboBox QAbstractItemView::item {{ padding: 5px 10px; }}
-            QGroupBox {{ border: {LIMITED_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; padding-top: 20px; }}
-            QGroupBox::title {{ background-color: {colors['generic_border_color']}; padding: 4px; subcontrol-origin: margin; subcontrol-position: top left; }}
-            QPushButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']};  padding: {PADDING}px 10px; }}
-            QPushButton:hover {{ background-color: {colors['button_hover']}; }}
-            QPushButton:pressed {{ background-color: {colors['button_pressed']}; }}
-            QPushButton#resetButton {{ background-color: {colors['reset_button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding: {PADDING}px 10px; }}
-            QPushButton#resetButton:hover {{ background-color: {colors['reset_button_hover']}; }}
-            QPushButton#resetButton:pressed {{ background-color: {colors['reset_button_pressed']}; }}
-            QCheckBox::indicator {{ width: 15px; height: 15px; }}
-            QCheckBox::indicator:unchecked {{ background-color: {colors['checkbox_background_unchecked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
-            QCheckBox::indicator:checked {{ background-color: {colors['checkbox_background_checked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
-            QCheckBox::indicator:disabled {{ background-color: #ff4d4d; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
-            QTableWidget {{ background-color: transparent; border: {LIMITED_BORDER_SIZE}px solid {colors['table_border_color']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
-            QTableWidget::title {{ background-color: {colors['table_background']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
-            QTableWidget::item {{ background-color: {colors['table_background']}; }}
-            QTableWidget::item:selected {{ background-color: {colors['table_item_selected']}; }}
-            QScrollBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; margin: 0px; }}
-            QScrollBar:vertical {{ width: {SCROLLBAR_WIDTH}px; }}
-            QScrollBar:horizontal {{ height: {SCROLLBAR_WIDTH}px; }}
-            QScrollBar::handle {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px }}
-            QScrollBar::add-page, QScrollBar::sub-page {{ background-color: none; }}
-            QScrollBar::add-line, QScrollBar::sub-line {{ width: 0px; height: 0px; }}
-            QMenu {{ background-color: {colors['search_bar_background']}; padding: {PADDING}px; border: {LIMITED_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
-            QMenu::item {{ padding: 4px 15px; border-radius: 4px }}
-            QMenu::item:selected {{ background-color: {colors['button_hover']}; }}
-            QMenu::item:pressed {{ background-color: {colors['button_pressed']}; }}
-        """
-        
-        return theme_stylesheet
 
 class ColorConfigDialog(QDialog):
     def __init__(self, parent=None, current_colors=None, theme="dark", border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
@@ -184,17 +43,15 @@ class ColorConfigDialog(QDialog):
         self.setup_ui()
 
     def setup_ui(self):
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        main_layout = QVBoxLayout()
+        self.setLayout(main_layout)
 
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area_widget = QWidget()
         scroll_area.setWidget(scroll_area_widget)
-        scroll_area_layout = QVBoxLayout()
-        scroll_area_widget.setLayout(scroll_area_layout)
+        scroll_area_layout = QVBoxLayout(scroll_area_widget)
 
-        # Define groups with their respective elements
         groups = [
             ("General Colors", [
                 ("Text", "text_color"),
@@ -235,21 +92,18 @@ class ColorConfigDialog(QDialog):
             scroll_area_layout.addSpacing(10)
 
         self.setup_border_group()
+        scroll_area_layout.addWidget(self.border_group)
 
-        layout.addWidget(scroll_area)
-        layout.addWidget(self.border_group)
+        main_layout.addWidget(scroll_area)
 
         apply_button = QPushButton("Apply and Save")
         apply_button.clicked.connect(self.apply_colors)
-        layout.addWidget(apply_button)
+        main_layout.addWidget(apply_button)
 
     def setup_group(self, group, elements):
         layout = QFormLayout()
         group.setLayout(layout)
-        for label, key in elements:
-            self.add_color_picker(layout, label, key)
-            # Add a tooltip for clarity
-            layout.itemAt(layout.rowCount() - 1, QFormLayout.LabelRole).widget().setToolTip(f"Select or reset the {label} color.")
+        [self.add_color_picker(layout, label, key) for label, key in elements]
 
     def add_color_picker(self, layout, label, key):
         color_name = self.current_colors.get(key, "")
@@ -289,8 +143,7 @@ class ColorConfigDialog(QDialog):
             ("Scroll Radius", "scroll_radius", 0, self.scrollbar_width // 2, self.update_scroll_radius, DEFAULT_SR)
         ]
 
-        for label, key, min_val, max_val, update_func, default_val in sliders:
-            self.add_slider_row(layout, label, key, min_val, max_val, update_func, default_val)
+        [self.add_slider_row(layout, label, key, min_val, max_val, update_func, default_val) for label, key, min_val, max_val, update_func, default_val in sliders]
 
     def add_slider_row(self, layout, label, key, min_val, max_val, update_func, default_val):
         label_widget = QLabel(label)
@@ -385,7 +238,7 @@ class SteamKeyManager(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Steam Key Manager V3 (Beta)")
-        self.resize(800, 600)
+        self.resize(850, 600)
         self.data_file = Path("steam_keys.json")
         self.config_file = Path("manager_settings.json")
         
@@ -404,7 +257,7 @@ class SteamKeyManager(QMainWindow):
         self.scroll_radius = DEFAULT_SR
         
         # Load data
-        self.load_data()
+        self.load_key_data()
         self.load_config()
         
         # Set up UI
@@ -429,35 +282,29 @@ class SteamKeyManager(QMainWindow):
         main_widget.setLayout(main_layout)
         self.setCentralWidget(main_widget)
 
-        # Dark/Light Theme Toggle
+        # Default Theme Toggle
         self.theme_switch = QCheckBox("Dark Mode")
         self.theme_switch.setChecked(self.theme == "dark")
         self.theme_switch.stateChanged.connect(self.toggle_default_theme)
-        theme_layout.addWidget(self.theme_switch)
 
         # Default/Custom Theme Toggle
-        self.toggle_theme_checkbox = QCheckBox("Enable Custom Colors")
+        self.toggle_theme_checkbox = QCheckBox("Use Custom Colors")
         self.toggle_theme_checkbox.setChecked(self.using_custom_colors)
         self.toggle_theme_checkbox.stateChanged.connect(self.toggle_custom_theme)
-        theme_layout.addWidget(self.toggle_theme_checkbox)
 
+        # Hamburger Button for More Actions
+        spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.menu_button = QPushButton()
+        self.menu_button.setIcon(QIcon("C:/Users/jackt/Desktop/WINTER DISCORD BOTO/discordbot/steam_code_database/SteamKM_Icons/menu.svg"))
+        self.menu_button.setFixedSize(BUTTON_HEIGHT+2, BUTTON_HEIGHT)
+        self.menu_button.clicked.connect(self.show_hamburger_menu)
+        
         # Buttons
-        self.color_config_button = self.create_button("Customize", BUTTON_HEIGHT, self.open_color_config_dialog)
-        self.update_button = self.create_button("Check for Updates", BUTTON_HEIGHT, self.check_updates)
-        self.import_button = self.create_button("Import Games", BUTTON_HEIGHT, self.import_games)
-        self.backup_button = self.create_button("Manual Backup", BUTTON_HEIGHT, self.manual_backup)
+        self.color_config_button = self.create_button("Customize Colors", BUTTON_HEIGHT, self.open_color_config_dialog)
         self.add_button = self.create_button("Add Games", 75, self.add_games)
         self.toggle_keys_button = self.create_button("Toggle Steam Keys", BUTTON_HEIGHT, self.toggle_all_keys_visibility)
         self.copy_button = self.create_button("Copy Selected Keys", BUTTON_HEIGHT, self.copy_selected_keys)
-        self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected)
-        theme_layout.addWidget(self.color_config_button)
-        theme_layout.addWidget(self.import_button)
-        theme_layout.addWidget(self.backup_button)
-        theme_layout.addWidget(self.update_button)
-        add_button_layout.addWidget(self.add_button)
-        button_layout.addWidget(self.toggle_keys_button)
-        button_layout.addWidget(self.copy_button)
-        button_layout.addWidget(self.remove_button)
+        self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected_games)
         
         # Add Games Input Box
         self.input_text = QTextEdit()
@@ -465,29 +312,25 @@ class SteamKeyManager(QMainWindow):
         self.input_text.setLineWrapMode(QTextEdit.NoWrap)
         self.input_text.setFixedHeight(75)
         self.input_text.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        input_row_layout.addWidget(self.input_text)
         
         # Search Bar
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search by title or key...")
         self.search_bar.setFixedHeight(BUTTON_HEIGHT)
         self.search_bar.textChanged.connect(self.refresh_game_list)
-        search_layout.addWidget(self.search_bar)
 
         # Add category filter drop-down
         self.category_filter = QComboBox()
         self.category_filter.setFixedHeight(BUTTON_HEIGHT)
         self.category_filter.setFixedWidth(140)
-        self.category_filter.addItem("All Categories")  # Filter for all games
+        self.category_filter.addItem("All Categories")
         self.category_filter.addItems(self.categories)
         self.category_filter.currentTextChanged.connect(self.refresh_game_list)
-        search_layout.addWidget(self.category_filter, 1)
         
         # Found Games Count label
         self.found_count_label = QLabel("Found Games: 0")
         self.found_count_label.setObjectName("foundCountLabel")
         self.found_count_label.setFixedHeight(BUTTON_HEIGHT)
-        search_layout.addWidget(self.found_count_label)
 
         # Game list section
         self.table_widget = QTableWidget()
@@ -496,21 +339,35 @@ class SteamKeyManager(QMainWindow):
         self.table_widget.setColumnWidth(0, 400)  # Set width for the "Title" column
         self.table_widget.setColumnWidth(1, 200)  # Set width for the "Steam Key" column
         self.table_widget.setColumnWidth(2, 140)  # Set width for the "Category" column
-        self.table_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # Enable horizontal scrollbar 
+        self.table_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.table_widget.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.table_widget.customContextMenuRequested.connect(self.show_context_menu)
+        self.table_widget.customContextMenuRequested.connect(self.show_right_click_menu)
+        
+        # Row Layout
+        theme_layout.addWidget(self.theme_switch)
+        theme_layout.addWidget(self.toggle_theme_checkbox)
+        theme_layout.addSpacerItem(spacer)
+        theme_layout.addWidget(self.color_config_button)
+        theme_layout.addWidget(self.menu_button)
+        add_button_layout.addWidget(self.add_button)
+        button_layout.addWidget(self.toggle_keys_button)
+        button_layout.addWidget(self.copy_button)
+        button_layout.addWidget(self.remove_button)
+        input_row_layout.addWidget(self.input_text)
+        search_layout.addWidget(self.search_bar)
+        search_layout.addWidget(self.category_filter, 1)
+        search_layout.addWidget(self.found_count_label)
         table_layout.addWidget(self.table_widget)
  
         # Final GUI Layout
         main_layout.addLayout(theme_layout)
-        theme_layout.addStretch() # Push widgets to the left
         input_row_layout.addLayout(add_button_layout)
         main_layout.addSpacing(10)
         main_layout.addLayout(input_row_layout)
         main_layout.addSpacing(10)
         main_layout.addLayout(search_layout)
         main_layout.addSpacing(3)
-        main_layout.addLayout(table_layout, 1)  # Use stretch factor 1 to make the table widget take up the remaining space
+        main_layout.addLayout(table_layout, 1)  # Use stretch factor of 1 to make the table widget take up the remaining space
         main_layout.addSpacing(5)
         main_layout.addLayout(button_layout)
 
@@ -523,21 +380,69 @@ class SteamKeyManager(QMainWindow):
         else:
             self.apply_theme(self.theme)
 
+    def check_updates(self):
+        latest_version = check_for_updates()
+        if latest_version:
+            reply = QMessageBox.question(self, "New Version Available", f"New {latest_version} is available. Do you want to update?",
+                QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                download_update(latest_version)
+        else:
+            QMessageBox.information(self, "Update Check", f"You're already on the latest build {RELEASE_BUILD}")
+    
     def create_button(self, text, height, slot):
         button = QPushButton(text)
         button.setFixedHeight(height)
         button.clicked.connect(slot)
         return button
+            
+    def parse_input_line(self, line):
+        match = re.match(r'(.+?)\s+([A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5})', line)
+        return match.groups() if match else (None, None)
 
-    def check_updates(self):
-        latest_version = check_for_updates()
-        if latest_version:
-            reply = QMessageBox.question(self, "New Version Available", f"New {latest_version} is available. Do you want to update?",
-                                        QMessageBox.Yes | QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                download_update(latest_version)
-        else:
-            QMessageBox.information(self, "Update Check", f"You're already on the latest Release Build {RELEASE_BUILD}")
+    def show_hamburger_menu(self):
+        menu = QMenu(self)
+
+        import_action = QAction("Import Games", self)
+        import_action.triggered.connect(self.import_games)
+        menu.addAction(import_action)
+        backup_action = QAction("Backup Games", self)
+        backup_action.triggered.connect(self.manual_game_data_backup)
+        menu.addAction(backup_action)
+        update_action = QAction("Check for Updates", self)
+        update_action.triggered.connect(self.check_updates)
+        menu.addAction(update_action)
+
+        pos = self.menu_button.mapToGlobal(QPoint(0, self.menu_button.height()))
+        pos.setX(pos.x() - menu.sizeHint().width() + self.menu_button.width() + 1)
+        pos.setY(pos.y() + 4)  # Move the menu down by 2 pixels
+        menu.exec(pos)
+        
+    def show_right_click_menu(self, position):
+        menu = QMenu(self)
+        reveal_action = QAction("Reveal/Hide")
+        reveal_action.triggered.connect(self.toggle_selected_keys)
+        copy_action = QAction("Copy")
+        copy_action.triggered.connect(self.copy_selected_keys)
+        remove_action = QAction("Remove")
+        remove_action.triggered.connect(self.remove_selected_games)
+       
+        set_game_category_menu = QMenu("Set Category", self)
+        for category in self.categories:
+            action = QAction(category, self)
+            action.triggered.connect(lambda checked, c=category: self.set_game_category(c))
+            set_game_category_menu.addAction(action)
+            
+        menu.addAction(reveal_action)
+        menu.addAction(copy_action)
+        menu.addAction(remove_action)
+        menu.addMenu(set_game_category_menu)
+        
+        # Get the row index from the position
+        row = self.table_widget.rowAt(position.y())
+        if row >= 0:
+            unique_id = self.row_to_unique_id[row]
+            menu.exec(self.table_widget.viewport().mapToGlobal(position))
 
     def toggle_default_theme(self):
         self.theme = "dark" if self.theme_switch.isChecked() else "light"
@@ -564,7 +469,7 @@ class SteamKeyManager(QMainWindow):
         self.setStyleSheet(theme.generate_stylesheet())
 
     def open_color_config_dialog(self):
-        self.toggle_theme_checkbox.setChecked(True)  # Ensure the checkbox is checked before opening the dialog
+        self.toggle_theme_checkbox.setChecked(True)
         dialog = ColorConfigDialog(self, self.custom_colors, self.theme, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
         if dialog.exec() == QDialog.Accepted:
             self.custom_colors = dialog.current_colors
@@ -576,122 +481,10 @@ class SteamKeyManager(QMainWindow):
             self.scroll_radius = dialog.scroll_radius
             self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
             self.save_config()
-
-    def add_games(self):
-        input_text = self.input_text.toPlainText().strip()
-        added_count = 0
-        invalid_lines = []
-        already_exists = []
-        added_titles = []
-
-        for line in input_text.split('\n'):
-            title, key = self.parse_input_line(line)
-            if title and key:
-                # Check if the key already exists to prevent duplicates
-                if key not in (game["key"] for game in self.games.values()):
-                    # Add game with default category "New" and a unique ID
-                    unique_id = str(uuid.uuid4())
-                    self.games[unique_id] = {"title": title, "key": key, "category": "New"}
-                    added_count += 1
-                    added_titles.append(title)
-                else:
-                    already_exists.append(title)
-            else:
-                invalid_lines.append(line)
-        
-        self.input_text.clear()
-        
-        if added_count > 0:
-            added_titles_str = ", ".join(added_titles)
-            QMessageBox.information(self, "Success", f"Added {added_count} game(s) successfully: {added_titles_str}")
-        
-        if invalid_lines:
-            QMessageBox.warning(self, "Invalid Format", "Some lines had an invalid format.")
-        
-        if already_exists:
-            QMessageBox.warning(self, "Duplicate Keys", f"The following games were ignored: {', '.join(already_exists)}")
-
-        self.save_data()
-        self.refresh_game_list()
-        
-    def refresh_game_list(self):
-        search_term = self.search_bar.text().lower()
-        category_filter = self.category_filter.currentText()
-        
-        # Clear the table and set row count based on filtered games
-        self.table_widget.clearContents()
-        self.table_widget.setRowCount(0)
-
-        # Filter games based on search term and category
-        filtered_games = {
-            unique_id: data for unique_id, data in self.games.items()
-            if (search_term in data["title"].lower() or search_term in data["key"].lower()) and
-            (category_filter == "All Categories" or data["category"] == category_filter)
-        }
-
-        # Update the found games count
-        self.found_count_label.setText(f"Found Games: {len(filtered_games)}")
-        self.table_widget.setRowCount(len(filtered_games))
-
-        # Store unique IDs in a dictionary to map table rows to unique IDs
-        self.row_to_unique_id = {i: unique_id for i, unique_id in enumerate(sorted(filtered_games.keys(), key=lambda x: self.games[x]["title"]))}
-
-        for i, unique_id in self.row_to_unique_id.items():
-            data = self.games[unique_id]
-            # Create table items for title, key, and category
-            title_item = QTableWidgetItem(data["title"])
-            title_item.setFlags(title_item.flags() & ~Qt.ItemIsEditable)
-            
-            key_item = QTableWidgetItem(data["key"] if self.show_keys or unique_id in self.visible_keys else self.censor_key(data["key"]))
-            key_item.setFlags(key_item.flags() & ~Qt.ItemIsEditable)
-            key_item.setTextAlignment(Qt.AlignCenter)
-
-            category_item = QTableWidgetItem(data["category"])
-            category_item.setFlags(category_item.flags() & ~Qt.ItemIsEditable)
-            category_item.setTextAlignment(Qt.AlignCenter)
-            
-            # Add items to table
-            self.table_widget.setItem(i, 0, title_item)
-            self.table_widget.setItem(i, 1, key_item)
-            self.table_widget.setItem(i, 2, category_item)
-
-    def show_context_menu(self, position):
-        menu = QMenu()
-        reveal_action = QAction("Reveal/Hide")
-        reveal_action.triggered.connect(self.toggle_selected_keys)
-        copy_action = QAction("Copy")
-        copy_action.triggered.connect(self.copy_selected_keys)
-        remove_action = QAction("Remove")
-        remove_action.triggered.connect(self.remove_selected)
-       
-        set_category_menu = QMenu("Set Category", self)
-        for category in self.categories:
-            action = QAction(category, self)
-            action.triggered.connect(lambda checked, c=category: self.set_category(c))
-            set_category_menu.addAction(action)
-
-        menu.addAction(reveal_action)
-        menu.addAction(copy_action)
-        menu.addAction(remove_action)
-        menu.addMenu(set_category_menu)
-        
-        # Get the row index from the position
-        row = self.table_widget.rowAt(position.y())
-        if row >= 0:
-            unique_id = self.row_to_unique_id[row]
-            menu.exec(self.table_widget.viewport().mapToGlobal(position))
-    
-    def parse_input_line(self, line):
-        match = re.search(r'([A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5})', line)
-        if match:
-            key = match.group(1)
-            title = line[:match.start()].strip()
-            return title, key
-        return None, None
     
     def censor_key(self, key):
         return '-'.join(['*' * len(part) for part in key.split('-')])
-
+    
     def toggle_all_keys_visibility(self):
         self.show_keys = not self.show_keys
         if not self.show_keys:
@@ -707,24 +500,41 @@ class SteamKeyManager(QMainWindow):
                 self.visible_keys.add(unique_id)
         self.refresh_game_list()
 
-    def copy_selected_keys(self):
-        selected_items = self.table_widget.selectedItems()
-        if not selected_items:
-            QMessageBox.information(self, "Copy Error", "Please select at least one item to copy.")
-            return
+    def add_games(self):
+        input_text = self.input_text.toPlainText().strip()
+        added_count = 0
+        invalid_lines = []
+        already_exists = set()
+        added_titles = []
+
+        for line in input_text.split('\n'):
+            title, key = self.parse_input_line(line)
+            if title and key:
+                if key not in {game["key"] for game in self.games.values()}:
+                    unique_id = str(uuid.uuid4())
+                    self.games[unique_id] = {"title": title, "key": key, "category": "New"}
+                    added_count += 1
+                    added_titles.append(title)
+                else:
+                    already_exists.add(title)
+            else:
+                invalid_lines.append(line)
         
-        selected_keys = []
-        for item in selected_items:
-            row = item.row()
-            unique_id = self.row_to_unique_id[row]
-            if unique_id in self.games:
-                game = self.games[unique_id]
-                selected_keys.append(f"{game['title']}: {game['key']}")
+        self.input_text.clear()
         
-        pyperclip.copy("\n".join(selected_keys))
-        QMessageBox.information(self, "Copy Keys", "Keys copied to clipboard.")
+        if added_count > 0:
+            QMessageBox.information(self, "Success", f"Added {added_count} game(s) successfully: {', '.join(added_titles)}")
         
-    def remove_selected(self):
+        if invalid_lines:
+            QMessageBox.warning(self, "Invalid Format", "Some lines had an invalid format.")
+        
+        if already_exists:
+            QMessageBox.warning(self, "Duplicate Keys", f"The following games were ignored: {', '.join(already_exists)}")
+
+        self.save_key_data()
+        self.refresh_game_list()
+            
+    def remove_selected_games(self):
         selected_items = self.table_widget.selectedItems()
         if not selected_items:
             QMessageBox.information(self, "Remove Error", "Please select at least one item to remove.")
@@ -744,18 +554,70 @@ class SteamKeyManager(QMainWindow):
                 removed_titles_str = ", ".join(removed_titles)
                 QMessageBox.information(self, "Success", f"Successfully removed {removed_titles_str}")
             
-            self.save_data()
+            self.save_key_data()
             self.refresh_game_list()
 
-    def set_category(self, category):
-        # Update selected games to new category
+    def copy_selected_keys(self):
+        selected_items = self.table_widget.selectedItems()
+        if not selected_items:
+            QMessageBox.information(self, "Copy Error", "Please select at least one item to copy.")
+            return
+        
+        selected_keys = []
+        for item in selected_items:
+            row = item.row()
+            unique_id = self.row_to_unique_id[row]
+            if unique_id in self.games:
+                game = self.games[unique_id]
+                selected_keys.append(f"{game['title']}: {game['key']}")
+        
+        pyperclip.copy("\n".join(selected_keys))
+        QMessageBox.information(self, "Copy Keys", "Keys copied to clipboard.")
+    
+    def set_game_category(self, category):
         for item in self.table_widget.selectedItems():
             row = item.row()
             unique_id = self.row_to_unique_id[row]
             if unique_id in self.games:
                 self.games[unique_id]["category"] = category
-        self.save_data()
+        self.save_key_data()
         self.refresh_game_list()
+           
+    def refresh_game_list(self):
+        search_term = self.search_bar.text().lower()
+        category_filter = self.category_filter.currentText()
+
+		# Filter and sort games
+        filtered_games = [
+            (unique_id, data) for unique_id, data in self.games.items()
+            if (search_term in data["title"].lower() or search_term in data["key"].lower()) and
+            (category_filter == "All Categories" or data["category"] == category_filter)
+        ]
+        filtered_games.sort(key=lambda x: x[1]["title"])
+
+        # Update the found games count
+        self.found_count_label.setText(f"Found Games: {len(filtered_games)}")
+        self.table_widget.setRowCount(len(filtered_games))
+
+        # Map table rows to unique IDs
+        self.row_to_unique_id = {i: unique_id for i, (unique_id, _) in enumerate(filtered_games)}
+
+        for i, (unique_id, data) in enumerate(filtered_games):
+            # Create table items
+            title_item = QTableWidgetItem(data["title"])
+            key_item = QTableWidgetItem(data["key"] if self.show_keys or unique_id in self.visible_keys else self.censor_key(data["key"]))
+            category_item = QTableWidgetItem(data["category"])
+
+            # Set item flags and alignment
+            for item in (title_item, key_item, category_item):
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            key_item.setTextAlignment(Qt.AlignCenter)
+            category_item.setTextAlignment(Qt.AlignCenter)
+
+            # Add items to table
+            self.table_widget.setItem(i, 0, title_item)
+            self.table_widget.setItem(i, 1, key_item)
+            self.table_widget.setItem(i, 2, category_item)
 
     def import_games(self):
         file_dialog = QFileDialog(self)
@@ -771,52 +633,47 @@ class SteamKeyManager(QMainWindow):
                 except Exception as e:
                     QMessageBox.warning(self, "Error", f"Failed to import games: {str(e)}")
 
-
     def merge_imported_games(self, import_file):
         try:
             with open(import_file, 'r') as file:
                 imported_data = json.load(file)
             
-            added_count = 0
+            added_count = [0]
             added_titles = []
-            
+
+            def add_game(title, code, category):
+                if title and code and not any(game["key"] == code for game in self.games.values()):
+                    unique_id = str(uuid.uuid4())
+                    self.games[unique_id] = {"title": title, "key": code, "category": category}
+                    added_count[0] += 1  # Increment the count
+                    added_titles.append(title)
+
             if isinstance(imported_data, list):
-                # Old format: list of dictionaries
                 for game in imported_data:
-                    title = game.get("title")
-                    code = game.get("code")
-                    category = game.get("category", "New")
-
-                    if title and code and not any(game["key"] == code for game in self.games.values()):
-                        unique_id = str(uuid.uuid4())
-                        self.games[unique_id] = {"title": title, "key": code, "category": category}
-                        added_count += 1
-                        added_titles.append(title)
-            
+                    add_game(game.get("title"), game.get("code"), game.get("category", "New"))
             elif isinstance(imported_data, dict):
-                # New format: dictionary with unique IDs as keys
-                for unique_id, game in imported_data.items():
-                    title = game.get("title")
-                    code = game.get("key")
-                    category = game.get("category", "New")
-
-                    if title and code and not any(game["key"] == code for game in self.games.values()):
-                        self.games[unique_id] = {"title": title, "key": code, "category": category}
-                        added_count += 1
-                        added_titles.append(title)
+                for game in imported_data.values():
+                    add_game(game.get("title"), game.get("key"), game.get("category", "New"))
             
-            if added_count > 0:
+            if added_count[0] > 0:
                 added_titles_str = ", ".join(added_titles)
-                self.save_data()
+                self.save_key_data()
                 self.refresh_game_list()
-                QMessageBox.information(self, "Success", f"Successfully imported {added_count} game(s): {added_titles_str}")
+                QMessageBox.information(self, "Success", f"Successfully imported {added_count[0]} game(s): {added_titles_str}")
             else:
                 QMessageBox.information(self, "Error", f"Didn't find any new games to import")
 
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to import games: {str(e)}")
-    
-    def load_data(self):
+
+    def manual_game_data_backup(self):
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getSaveFileName(self,"Save Backup File", "", "JSON Files (*.json)", options=options)
+        if file_name:
+            shutil.copy(self.data_file, file_name)
+            QMessageBox.information(self, "Success", "Data backed up successfully.")
+        
+    def load_key_data(self):
         if self.data_file.exists():
             try:
                 with open(self.data_file, 'r') as file:
@@ -825,24 +682,17 @@ class SteamKeyManager(QMainWindow):
                 QMessageBox.warning(self, "Error", f"Failed to load data: {str(e)}")
                 self.games = {}
 
-    def save_data(self):
+    def save_key_data(self):
         backup_file = self.data_file.with_suffix('.json.bak')
         if self.data_file.exists():
             shutil.copy(self.data_file, backup_file)
-        with open(self.data_file, 'w') as file:
-            json.dump(self.games, file, indent=4)
-
-    def manual_backup(self):
-        options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(self,"Save Backup File", "", "JSON Files (*.json)", options=options)
-        if file_name:
-            shutil.copy(self.data_file, file_name)
-            QMessageBox.information(self, "Success", "Data backed up successfully.")
+        self.data_file.write_text(json.dumps(self.games, indent=4))
 
     def load_config(self):
         if self.config_file.exists():
-            with open(self.config_file, 'r') as file:
-                config = json.load(file)
+            try:
+                with open(self.config_file, 'r') as file:
+                    config = json.load(file)
                 self.theme = config.get("theme", "dark")
                 self.using_custom_colors = config.get("using_custom_colors", False)
                 self.custom_colors = config.get("custom_colors", {})
@@ -851,15 +701,15 @@ class SteamKeyManager(QMainWindow):
                 self.checkbox_radius = config.get("checkbox_radius", DEFAULT_CR)
                 self.scrollbar_width = config.get("scrollbar_width", DEFAULT_SW)
                 self.scroll_radius = config.get("scroll_radius", DEFAULT_SR)
-        else:
-            self.theme = "dark"
-            self.using_custom_colors = False
-            self.custom_colors = {}
-            self.border_radius = DEFAULT_BR
-            self.border_size = DEFAULT_BS
-            self.checkbox_radius = DEFAULT_CR
-            self.scrollbar_width = DEFAULT_SW
-            self.scroll_radius = DEFAULT_SR
+            except json.JSONDecodeError:
+                self.theme = "dark"
+                self.using_custom_colors = False
+                self.custom_colors = {}
+                self.border_radius = DEFAULT_BR
+                self.border_size = DEFAULT_BS
+                self.checkbox_radius = DEFAULT_CR
+                self.scrollbar_width = DEFAULT_SW
+                self.scroll_radius = DEFAULT_SR
 
     def save_config(self):
         config = {
@@ -872,8 +722,7 @@ class SteamKeyManager(QMainWindow):
             "scrollbar_width": self.scrollbar_width,
             "scroll_radius": self.scroll_radius,
         }
-        with open(self.config_file, 'w') as file:
-            json.dump(config, file, indent=4)
+        self.config_file.write_text(json.dumps(config, indent=4))
 
 def main():
     app = QApplication(sys.argv)
