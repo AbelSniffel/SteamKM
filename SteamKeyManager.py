@@ -270,7 +270,8 @@ class SteamKeyManager(QMainWindow):
             self.apply_theme(self.theme)
 
     def setup_ui(self):
-        # Create GUI Layout Elements
+        # GUI Layout Elements
+        spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         main_widget = QWidget()
         main_layout = QVBoxLayout()
         theme_layout = QHBoxLayout()
@@ -286,25 +287,34 @@ class SteamKeyManager(QMainWindow):
         self.theme_switch = QCheckBox("Dark Mode")
         self.theme_switch.setChecked(self.theme == "dark")
         self.theme_switch.stateChanged.connect(self.toggle_default_theme)
+        theme_layout.addWidget(self.theme_switch)
 
         # Default/Custom Theme Toggle
         self.toggle_theme_checkbox = QCheckBox("Use Custom Colors")
         self.toggle_theme_checkbox.setChecked(self.using_custom_colors)
         self.toggle_theme_checkbox.stateChanged.connect(self.toggle_custom_theme)
+        theme_layout.addWidget(self.toggle_theme_checkbox)
 
-        # Hamburger Button for More Actions
-        spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.menu_button = QPushButton()
-        self.menu_button.setIcon(QIcon("C:/Users/jackt/Desktop/WINTER DISCORD BOTO/discordbot/steam_code_database/SteamKM_Icons/menu.svg"))
-        self.menu_button.setFixedSize(BUTTON_HEIGHT+2, BUTTON_HEIGHT)
-        self.menu_button.clicked.connect(self.show_hamburger_menu)
-        
         # Buttons
-        self.color_config_button = self.create_button("Customize Colors", BUTTON_HEIGHT, self.open_color_config_dialog)
+        self.update_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.check_updates, 
+            icon="C:/Users/jackt/Desktop/WINTER DISCORD BOTO/discordbot/steam_code_database/SteamKM_Icons/update_icon.svg")
+        self.color_config_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_color_config_dialog, 
+            icon="C:/Users/jackt/Desktop/WINTER DISCORD BOTO/discordbot/steam_code_database/SteamKM_Icons/color-picker.svg")
+        self.hamburger_menu_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.show_hamburger_menu, 
+            icon="C:/Users/jackt/Desktop/WINTER DISCORD BOTO/discordbot/steam_code_database/SteamKM_Icons/menu.svg")
         self.add_button = self.create_button("Add Games", 75, self.add_games)
         self.toggle_keys_button = self.create_button("Toggle Steam Keys", BUTTON_HEIGHT, self.toggle_all_keys_visibility)
         self.copy_button = self.create_button("Copy Selected Keys", BUTTON_HEIGHT, self.copy_selected_keys)
         self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected_games)
+
+        theme_layout.addSpacerItem(spacer)
+        theme_layout.addWidget(self.update_button)
+        theme_layout.addWidget(self.color_config_button)
+        theme_layout.addWidget(self.hamburger_menu_button)
+        add_button_layout.addWidget(self.add_button)
+        button_layout.addWidget(self.toggle_keys_button)
+        button_layout.addWidget(self.copy_button)
+        button_layout.addWidget(self.remove_button)
         
         # Add Games Input Box
         self.input_text = QTextEdit()
@@ -312,12 +322,14 @@ class SteamKeyManager(QMainWindow):
         self.input_text.setLineWrapMode(QTextEdit.NoWrap)
         self.input_text.setFixedHeight(75)
         self.input_text.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        input_row_layout.addWidget(self.input_text)
         
         # Search Bar
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search by title or key...")
         self.search_bar.setFixedHeight(BUTTON_HEIGHT)
         self.search_bar.textChanged.connect(self.refresh_game_list)
+        search_layout.addWidget(self.search_bar)
 
         # Add category filter drop-down
         self.category_filter = QComboBox()
@@ -326,11 +338,13 @@ class SteamKeyManager(QMainWindow):
         self.category_filter.addItem("All Categories")
         self.category_filter.addItems(self.categories)
         self.category_filter.currentTextChanged.connect(self.refresh_game_list)
+        search_layout.addWidget(self.category_filter, 1)
         
         # Found Games Count label
         self.found_count_label = QLabel("Found Games: 0")
         self.found_count_label.setObjectName("foundCountLabel")
         self.found_count_label.setFixedHeight(BUTTON_HEIGHT)
+        search_layout.addWidget(self.found_count_label)
 
         # Game list section
         self.table_widget = QTableWidget()
@@ -342,21 +356,6 @@ class SteamKeyManager(QMainWindow):
         self.table_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.table_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table_widget.customContextMenuRequested.connect(self.show_right_click_menu)
-        
-        # Row Layout
-        theme_layout.addWidget(self.theme_switch)
-        theme_layout.addWidget(self.toggle_theme_checkbox)
-        theme_layout.addSpacerItem(spacer)
-        theme_layout.addWidget(self.color_config_button)
-        theme_layout.addWidget(self.menu_button)
-        add_button_layout.addWidget(self.add_button)
-        button_layout.addWidget(self.toggle_keys_button)
-        button_layout.addWidget(self.copy_button)
-        button_layout.addWidget(self.remove_button)
-        input_row_layout.addWidget(self.input_text)
-        search_layout.addWidget(self.search_bar)
-        search_layout.addWidget(self.category_filter, 1)
-        search_layout.addWidget(self.found_count_label)
         table_layout.addWidget(self.table_widget)
  
         # Final GUI Layout
@@ -382,17 +381,23 @@ class SteamKeyManager(QMainWindow):
 
     def check_updates(self):
         latest_version = check_for_updates()
-        if latest_version:
+        if latest_version is None:
+            QMessageBox.warning(self, "Update Check", "Failed to check for updates. Please try again later.")
+        elif latest_version == RELEASE_BUILD:
+            QMessageBox.information(self, "Update Check", f"You're already on the latest build {RELEASE_BUILD}")
+        else:
             reply = QMessageBox.question(self, "New Version Available", f"New {latest_version} is available. Do you want to update?",
-                QMessageBox.Yes | QMessageBox.No)
+                                        QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 download_update(latest_version)
-        else:
-            QMessageBox.information(self, "Update Check", f"You're already on the latest build {RELEASE_BUILD}")
     
-    def create_button(self, text, height, slot):
+    def create_button(self, text, height, slot, icon=None, fixed_width=None):
         button = QPushButton(text)
         button.setFixedHeight(height)
+        if icon:
+            button.setIcon(QIcon(icon))
+        if fixed_width:
+            button.setFixedWidth(fixed_width)
         button.clicked.connect(slot)
         return button
             
@@ -409,13 +414,10 @@ class SteamKeyManager(QMainWindow):
         backup_action = QAction("Backup Games", self)
         backup_action.triggered.connect(self.manual_game_data_backup)
         menu.addAction(backup_action)
-        update_action = QAction("Check for Updates", self)
-        update_action.triggered.connect(self.check_updates)
-        menu.addAction(update_action)
 
-        pos = self.menu_button.mapToGlobal(QPoint(0, self.menu_button.height()))
-        pos.setX(pos.x() - menu.sizeHint().width() + self.menu_button.width() + 1)
-        pos.setY(pos.y() + 4)  # Move the menu down by 2 pixels
+        pos = self.hamburger_menu_button.mapToGlobal(QPoint(0, self.hamburger_menu_button.height()))
+        pos.setX(pos.x() - menu.sizeHint().width() + self.hamburger_menu_button.width() + 1)
+        pos.setY(pos.y() + 4)  # Move the menu down by 4 pixels
         menu.exec(pos)
         
     def show_right_click_menu(self, position):
@@ -691,8 +693,7 @@ class SteamKeyManager(QMainWindow):
     def load_config(self):
         if self.config_file.exists():
             try:
-                with open(self.config_file, 'r') as file:
-                    config = json.load(file)
+                config = json.loads(self.config_file.read_text())
                 self.theme = config.get("theme", "dark")
                 self.using_custom_colors = config.get("using_custom_colors", False)
                 self.custom_colors = config.get("custom_colors", {})
