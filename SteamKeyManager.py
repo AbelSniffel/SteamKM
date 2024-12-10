@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
-    QTextEdit, QTableWidget, QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit, QTabWidget,
+    QTextEdit, QTableWidget, QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit,
     QFileDialog, QComboBox, QColorDialog, QDialog, QFormLayout, QGroupBox, QSlider, QScrollArea, QSpacerItem, QSizePolicy
 )
 from PySide6.QtGui import QAction, QColor, QIcon
@@ -260,14 +260,17 @@ class EditGameDialog(QDialog):
             form_layout = QFormLayout()
 
             title_edit = QLineEdit(game["title"])
+            title_edit.setFixedHeight(BUTTON_HEIGHT)
             form_layout.addRow("Title:", title_edit)
 
             key_edit = QLineEdit(game["key"])
+            key_edit.setFixedHeight(BUTTON_HEIGHT)
             form_layout.addRow("Key:", key_edit)
 
             category_combo = QComboBox()
             category_combo.addItems(["Premium", "Good", "Low Effort", "Bad", "VR", "Used", "New"])
             category_combo.setCurrentText(game["category"])
+            category_combo.setFixedHeight(BUTTON_HEIGHT)
             form_layout.addRow("Category:", category_combo)
 
             group_box.setLayout(form_layout)
@@ -355,7 +358,7 @@ class SteamKeyManager(QMainWindow):
         # Default/Custom Theme Toggle
         self.toggle_theme_checkbox = QCheckBox("Use Custom Colors")
         self.toggle_theme_checkbox.setChecked(self.using_custom_colors)
-        self.toggle_theme_checkbox.stateChanged.connect(self.toggle_custom_theme) # Ooops
+        self.toggle_theme_checkbox.stateChanged.connect(self.toggle_custom_theme)
         theme_layout.addWidget(self.toggle_theme_checkbox)
 
         # Buttons
@@ -389,7 +392,7 @@ class SteamKeyManager(QMainWindow):
         
         # Search Bar
         self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("Search by title or key...")
+        self.search_bar.setPlaceholderText("Search by title or key")
         self.search_bar.setFixedHeight(BUTTON_HEIGHT)
         self.search_bar.textChanged.connect(self.refresh_game_list)
         search_layout.addWidget(self.search_bar)
@@ -492,6 +495,7 @@ class SteamKeyManager(QMainWindow):
         copy_action = QAction("Copy")
         copy_action.triggered.connect(self.copy_selected_keys)
         menu.addAction(copy_action)
+
         remove_action = QAction("Remove")
         remove_action.triggered.connect(self.remove_selected_games)
         menu.addAction(remove_action)
