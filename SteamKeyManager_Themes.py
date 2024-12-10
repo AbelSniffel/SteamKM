@@ -43,7 +43,7 @@ class Theme:
             "table_item_selected": ("#62a88e", "#a6c7ff"),
             "table_gridline_color": ("#3d3d3d", "#e8e8e8"),
             "header_background": ("#444444", "#d9d9d9"),
-            "combobox_background": ("#525252", "#e1ebfa"),
+            "combobox_background": ("#525252", "#d6e8ff"),
             "combobox_dropdown_background": ("#444444", "#d9f8ff"),
             "interactables_border_color": ("#404040", "#d9e3f2"),
             "generic_border_color": ("#4d4d4d", "#d9e3f2"),
@@ -66,9 +66,9 @@ class Theme:
             #foundCountLabel {{ background-color: {colors['found_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
             QTextEdit {{ background-color: {colors['add_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
             QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
-            QComboBox {{  background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding: {PADDING}px; }}
+            QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding: {PADDING}px; }}
             QComboBox::drop-down {{ height: 0px; }}
-            QComboBox QAbstractItemView {{ background-color: {colors['combobox_background']};  border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; margin-top: 5px; padding: {PADDING}px; selection-background-color: {colors['table_item_selected']}; selection-color: {colors['table_item_selected']}; }}
+            QComboBox QAbstractItemView {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; margin-top: 5px; padding: {PADDING}px; selection-background-color: {colors['table_item_selected']}; selection-color: {colors['table_item_selected']}; }}
             QComboBox QAbstractItemView::item {{ padding: 5px 10px; }}
             QGroupBox {{ border: {LIMITED_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; padding-top: 20px; }}
             QGroupBox::title {{ background-color: {colors['generic_border_color']}; padding: 4px; subcontrol-origin: margin; subcontrol-position: top left; }}
@@ -81,7 +81,7 @@ class Theme:
             QCheckBox::indicator:unchecked {{ background-color: {colors['checkbox_background_unchecked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
             QCheckBox::indicator:checked {{ background-color: {colors['checkbox_background_checked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
             QCheckBox::indicator:disabled {{ background-color: #ff4d4d; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
-            QTableWidget {{ background-color: transparent; border: {LIMITED_BORDER_SIZE}px solid {colors['table_border_color']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
+            QTableWidget {{ background-color: {colors['table_background']}; border: {LIMITED_BORDER_SIZE}px solid {colors['table_border_color']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
             QTableWidget::title {{ background-color: {colors['table_background']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
             QTableWidget::item {{ background-color: {colors['table_background']}; }}
             QTableWidget::item:selected {{ background-color: {colors['table_item_selected']}; }}
