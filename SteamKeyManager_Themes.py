@@ -66,10 +66,11 @@ class Theme:
             #foundCountLabel {{ background-color: {colors['found_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
             QTextEdit {{ background-color: {colors['add_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
             QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
-            QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding: {PADDING}px; }}
-            QComboBox::drop-down {{ height: 0px; }}
-            QComboBox QAbstractItemView {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; margin-top: 5px; padding: {PADDING}px; selection-background-color: {colors['table_item_selected']}; selection-color: {colors['table_item_selected']}; }}
-            QComboBox QAbstractItemView::item {{ padding: 5px 10px; }}
+            QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
+            QComboBox::drop-down {{ height: 0; }}
+            QComboBox:hover {{ background-color: {colors['button_hover']}; }}
+            QComboBox::item {{ background-color: {colors['combobox_background']}; }}
+            QComboBox::item:selected {{ background-color: {colors['button_pressed']}; padding: 0 2px; }}
             QGroupBox {{ border: {LIMITED_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; padding-top: 20px; }}
             QGroupBox::title {{ background-color: {colors['generic_border_color']}; padding: 4px; subcontrol-origin: margin; subcontrol-position: top left; }}
             QPushButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']};  padding: {PADDING}px 10px; }}
