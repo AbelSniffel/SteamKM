@@ -17,7 +17,7 @@ import os
 from SteamKeyManager_Updater import check_for_updates, download_update
 from SteamKeyManager_Themes import Theme
 
-RELEASE_BUILD = "1.2"
+CURRENT_BUILD = "1.00"
 
 BUTTON_HEIGHT = 33
 DEFAULT_BR = 5 # Border Radius
@@ -449,8 +449,8 @@ class SteamKeyManager(QMainWindow):
         latest_version = check_for_updates()
         if latest_version is None:
             QMessageBox.warning(self, "Update Check", "Failed to check for updates. Please try again later.")
-        elif latest_version == RELEASE_BUILD:
-            QMessageBox.information(self, "Update Check", f"You're already on the latest build {RELEASE_BUILD}")
+        elif latest_version == CURRENT_BUILD:
+            QMessageBox.information(self, "Update Check", f"You're already on the latest build {CURRENT_BUILD}")
         else:
             reply = QMessageBox.question(self, "New Version Available", f"New {latest_version} is available. Do you want to update?",
                                         QMessageBox.Yes | QMessageBox.No)
@@ -474,6 +474,12 @@ class SteamKeyManager(QMainWindow):
     def show_hamburger_menu(self):
         menu = QMenu(self)
 
+        # Add version label
+        version_action = QAction(f"Version: {CURRENT_BUILD}", self)
+        version_action.setEnabled(False)
+        menu.addAction(version_action)
+        menu.addSeparator()
+
         import_action = QAction("Import Games", self)
         import_action.triggered.connect(self.import_games)
         menu.addAction(import_action)
@@ -492,6 +498,10 @@ class SteamKeyManager(QMainWindow):
         reveal_action.triggered.connect(self.toggle_selected_keys)
         menu.addAction(reveal_action)
 
+        edit_action = QAction("Edit")
+        edit_action.triggered.connect(self.edit_selected_game)
+        menu.addAction(edit_action)
+
         copy_action = QAction("Copy")
         copy_action.triggered.connect(self.copy_selected_keys)
         menu.addAction(copy_action)
@@ -499,10 +509,6 @@ class SteamKeyManager(QMainWindow):
         remove_action = QAction("Remove")
         remove_action.triggered.connect(self.remove_selected_games)
         menu.addAction(remove_action)
-
-        edit_action = QAction("Edit")
-        edit_action.triggered.connect(self.edit_selected_game)
-        menu.addAction(edit_action)
 
         set_game_category_menu = QMenu("Set Category", self)
         for category in self.categories:
