@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QFileDialog, QComboBox, QColorDialog, QDialog, QFormLayout, QGroupBox, QSlider, QScrollArea, QSpacerItem, QSizePolicy
 )
 from PySide6.QtGui import QAction, QColor, QIcon
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import Qt, QPoint, QTimer
 from pathlib import Path
 import json
 import sys
@@ -311,13 +311,16 @@ class SteamKeyManager(QMainWindow):
         self.checkbox_radius = DEFAULT_CR
         self.scrollbar_width = DEFAULT_SW
         self.scroll_radius = DEFAULT_SR
+        self.update_label = QLabel("Update Available")
+        self.update_label.setVisible(False)  # Initially hidden
         
         # Load data
         self.load_key_data()
         self.load_config()
         
-        # Set up UI
+        # Set up UI and Check for Updates
         self.setup_ui()
+        self.schedule_update_check()
         
         # Apply initial theme
         if self.using_custom_colors:
@@ -364,6 +367,7 @@ class SteamKeyManager(QMainWindow):
         self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected_games)
 
         theme_layout.addSpacerItem(spacer)
+        theme_layout.addWidget(self.update_label)
         theme_layout.addWidget(self.update_button)
         theme_layout.addWidget(self.color_config_button)
         theme_layout.addWidget(self.hamburger_menu_button)
@@ -446,6 +450,18 @@ class SteamKeyManager(QMainWindow):
                                         QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 download_update(latest_version)
+
+    def schedule_update_check(self):
+        QTimer.singleShot(1500, self.automatic_check_updates)
+
+    def automatic_check_updates(self):
+        latest_version = check_for_updates(silent=True)
+        if latest_version is None:
+            self.update_label.setVisible(False)
+        elif latest_version == CURRENT_BUILD:
+            self.update_label.setVisible(False)
+        else:
+            self.update_label.setVisible(True)
     
     def create_button(self, text, height, slot, icon=None, fixed_width=None):
         button = QPushButton(text)
