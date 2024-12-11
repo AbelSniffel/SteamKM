@@ -1,11 +1,12 @@
 # SteamKeyManager_Themes.py
 from PySide6.QtCore import Qt
 
+BUTTON_HEIGHT = 33
 DEFAULT_BR = 6  # Border Radius
 DEFAULT_BS = 0  # Border Size
 DEFAULT_CR = 4  # Checkbox Radius
 DEFAULT_SR = 3  # Scrollbar Radius
-DEFAULT_SW = 12  # Scrollbar Width
+DEFAULT_SW = 14 # Scrollbar Width
 COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-radius: 0px; border-right: 0px;"
 COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-left: 0px;"
 
@@ -17,9 +18,9 @@ class Theme:
         self.checkbox_radius = checkbox_radius
         self.scroll_radius = scroll_radius
         self.scrollbar_width = scrollbar_width
-        self.colors = self.get_theme_colors(theme)  # Get colors based on the theme
+        self.colors = self.get_theme_colors(theme)
         if custom_colors:
-            self.colors.update(custom_colors)  # Update with custom colors
+            self.colors.update(custom_colors)
 
     def get_theme_colors(self, theme):
         # Index 0: dark theme, Index 1: light theme
@@ -85,10 +86,10 @@ class Theme:
             QHeaderView {{ background-color: {colors['table_background']};; border: none; gridline-color: {colors['table_gridline_color']}; }}
             QHeaderView::section {{ background-color: {colors['table_background']}; }}
             QTableCornerButton::section {{ background-color: {colors['table_background']}; }}
-            QTableWidget {{ background-color: {colors['table_background']}; border: {MINIMUM_BORDER_SIZE}px solid {colors['table_border_color']}; padding: 10px; gridline-color: {colors['table_gridline_color']}; }}
+            QTableWidget {{ background-color: {colors['table_background']}; border: {MINIMUM_BORDER_SIZE}px solid {colors['table_border_color']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
             QTableWidget::item {{ background-color: transparent; }}
             QTableWidget::item:selected {{ background-color: {colors['table_item_selected']}; }}
-            QScrollBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; margin: 0px; }}
+            QScrollBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; }}
             QScrollBar:vertical {{ width: {SCROLLBAR_WIDTH}px; }}
             QScrollBar:horizontal {{ height: {SCROLLBAR_WIDTH}px; }}
             QScrollBar::handle {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px }}
