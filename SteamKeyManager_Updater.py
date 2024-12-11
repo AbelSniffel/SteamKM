@@ -5,7 +5,7 @@ import sys
 from PySide6.QtWidgets import QMessageBox
 from SteamKM_Version import CURRENT_BUILD  # Import the version number
 
-def check_for_updates():
+def check_for_updates(silent=False):
     try:
         response = requests.get("https://api.github.com/repos/AbelSniffel/SteamKeyManager/releases/latest")
         response.raise_for_status()  # Raise an error for bad responses (4xx and 5xx)
@@ -13,7 +13,8 @@ def check_for_updates():
         if latest_version > CURRENT_BUILD:
             return latest_version
     except requests.exceptions.RequestException as e:
-        QMessageBox.critical(None, "Update Error", f"Failed to check for updates: {e}")
+        if not silent:
+            QMessageBox.critical(None, "Update Error", f"Failed to check for updates: {e}")
     return None
 
 def download_update(latest_version):
