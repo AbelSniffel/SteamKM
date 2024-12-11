@@ -320,7 +320,7 @@ class SteamKeyManager(QMainWindow):
         
         # Set up UI and Check for Updates
         self.setup_ui()
-        self.schedule_update_check()
+        self.start_update_check()
         
         # Apply initial theme
         if self.using_custom_colors:
@@ -438,30 +438,27 @@ class SteamKeyManager(QMainWindow):
             self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
         else:
             self.apply_theme(self.theme)
+    
+    def start_update_check(self):
+        QTimer.singleShot(1500, lambda: self.check_updates(silent=True))
 
-    def check_updates(self):
-        latest_version = check_for_updates()
+    def check_updates(self, silent=False):
+        latest_version = check_for_updates(silent=silent)
         if latest_version is None:
-            QMessageBox.warning(self, "Update Check", "Failed to check for updates. Please try again later.")
+            if not silent:
+                QMessageBox.warning(self, "Update Check", "Failed to check for updates. Please try again later.")
+        
         elif latest_version == CURRENT_BUILD:
-            QMessageBox.information(self, "Update Check", f"You're already on the latest build {CURRENT_BUILD}")
+            if not silent:
+                QMessageBox.information(self, "Update Check", f"You're already on the latest build {CURRENT_BUILD}")
         else:
-            reply = QMessageBox.question(self, "New Version Available", f"New {latest_version} is available. Do you want to update?",
-                                        QMessageBox.Yes | QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                download_update(latest_version)
-
-    def schedule_update_check(self):
-        QTimer.singleShot(1500, self.automatic_check_updates)
-
-    def automatic_check_updates(self):
-        latest_version = check_for_updates(silent=True)
-        if latest_version is None:
-            self.update_label.setVisible(False)
-        elif latest_version == CURRENT_BUILD:
-            self.update_label.setVisible(False)
-        else:
-            self.update_label.setVisible(True)
+            if not silent:
+                reply = QMessageBox.question(self, "New Version Available", f"New {latest_version} is available. Do you want to update?",
+                                            QMessageBox.Yes | QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    download_update(latest_version)
+            else:
+                self.update_label.setVisible(True)
     
     def create_button(self, text, height, slot, icon=None, fixed_width=None):
         button = QPushButton(text)
