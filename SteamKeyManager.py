@@ -1,3 +1,4 @@
+# SteamKeyManager.py
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
     QTextEdit, QTableWidget, QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit,
@@ -13,11 +14,9 @@ import re
 import uuid
 import shutil
 import os
-
+from SteamKM_Version import CURRENT_BUILD
 from SteamKeyManager_Updater import check_for_updates, download_update
 from SteamKeyManager_Themes import Theme
-
-CURRENT_BUILD = "1.00"
 
 BUTTON_HEIGHT = 33
 DEFAULT_BR = 5 # Border Radius
@@ -474,7 +473,6 @@ class SteamKeyManager(QMainWindow):
     def show_hamburger_menu(self):
         menu = QMenu(self)
 
-        # Add version label
         version_action = QAction(f"Version: {CURRENT_BUILD}", self)
         version_action.setEnabled(False)
         menu.addAction(version_action)
@@ -483,6 +481,7 @@ class SteamKeyManager(QMainWindow):
         import_action = QAction("Import Games", self)
         import_action.triggered.connect(self.import_games)
         menu.addAction(import_action)
+
         backup_action = QAction("Backup Games", self)
         backup_action.triggered.connect(self.manual_game_data_backup)
         menu.addAction(backup_action)
