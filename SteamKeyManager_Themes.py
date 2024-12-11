@@ -1,3 +1,4 @@
+# SteamKeyManager_Themes.py
 from PySide6.QtCore import Qt
 
 DEFAULT_BR = 6  # Border Radius
@@ -56,7 +57,7 @@ class Theme:
         CHECKBOX_RADIUS = str(self.checkbox_radius)
         BORDER_RADIUS = str(self.border_radius)
         BORDER_SIZE = str(self.border_size)
-        LIMITED_BORDER_SIZE = str(max(self.border_size, 2))
+        MINIMUM_BORDER_SIZE = str(max(self.border_size, 2))
         SCROLL_RADIUS = str(self.scroll_radius)
         SCROLLBAR_WIDTH = str(self.scrollbar_width)
         PADDING = "5"
@@ -66,15 +67,14 @@ class Theme:
             #foundCountLabel {{ background-color: {colors['found_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
             QTextEdit {{ background-color: {colors['add_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
             QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
-            QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
+            QGroupBox {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; padding-top: 20px; }}
+            QGroupBox::title {{ background-color: {colors['generic_border_color']}; padding: 4px; subcontrol-origin: margin; subcontrol-position: top left; border-top-left-radius: {BORDER_RADIUS}px; border-bottom-right-radius: 6px; border: {MINIMUM_BORDER_SIZE}px solid {colors['generic_border_color']}; }}
+            QComboBox {{ background-color: {colors['combobox_background']}; }}
+            QComboBox:item:selected {{ background-color: {colors['table_item_selected']}; padding: 0 2px; }}
+            QComboBox QAbstractItemView {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
             QComboBox::drop-down {{ height: 0; }}
-            QComboBox:hover {{ background-color: {colors['button_hover']}; }}
-            QComboBox::item {{ background-color: {colors['combobox_background']}; }}
-            QComboBox::item:selected {{ background-color: {colors['button_pressed']}; padding: 0 2px; }}
-            QGroupBox {{ border: {LIMITED_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; padding-top: 20px; }}
-            QGroupBox::title {{ background-color: {colors['generic_border_color']}; padding: 4px; subcontrol-origin: margin; subcontrol-position: top left; }}
-            QPushButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']};  padding: {PADDING}px 10px; }}
-            QPushButton:hover {{ background-color: {colors['button_hover']}; }}
+            QPushButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding: {PADDING}px 10px; }}
+            QPushButton:hover, QComboBox:hover {{ background-color: {colors['button_hover']}; }}
             QPushButton:pressed {{ background-color: {colors['button_pressed']}; }}
             QPushButton#resetButton {{ background-color: {colors['reset_button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding: {PADDING}px 10px; }}
             QPushButton#resetButton:hover {{ background-color: {colors['reset_button_hover']}; }}
@@ -82,9 +82,11 @@ class Theme:
             QCheckBox::indicator:unchecked {{ background-color: {colors['checkbox_background_unchecked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
             QCheckBox::indicator:checked {{ background-color: {colors['checkbox_background_checked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
             QCheckBox::indicator:disabled {{ background-color: #ff4d4d; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
-            QTableWidget {{ background-color: {colors['table_background']}; border: {LIMITED_BORDER_SIZE}px solid {colors['table_border_color']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
-            QTableWidget::title {{ background-color: {colors['table_background']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
-            QTableWidget::item {{ background-color: {colors['table_background']}; }}
+            QHeaderView {{ background-color: {colors['table_background']};; border: none; gridline-color: {colors['table_gridline_color']}; }}
+            QHeaderView::section {{ background-color: {colors['table_background']}; }}
+            QTableCornerButton::section {{ background-color: {colors['table_background']}; }}
+            QTableWidget {{ background-color: {colors['table_background']}; border: {MINIMUM_BORDER_SIZE}px solid {colors['table_border_color']}; padding: 10px; gridline-color: {colors['table_gridline_color']}; }}
+            QTableWidget::item {{ background-color: transparent; }}
             QTableWidget::item:selected {{ background-color: {colors['table_item_selected']}; }}
             QScrollBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; margin: 0px; }}
             QScrollBar:vertical {{ width: {SCROLLBAR_WIDTH}px; }}
@@ -92,7 +94,7 @@ class Theme:
             QScrollBar::handle {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px }}
             QScrollBar::add-page, QScrollBar::sub-page {{ background-color: none; }}
             QScrollBar::add-line, QScrollBar::sub-line {{ width: 0px; height: 0px; }}
-            QMenu {{ background-color: {colors['main_background']}; padding: {PADDING}px; border: {LIMITED_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
+            QMenu {{ background-color: {colors['main_background']}; padding: {PADDING}px; border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
             QMenu::item {{ padding: {PADDING}px 15px; border-radius: 4px; }}
             QMenu::item:selected {{ background-color: {colors['button_hover']}; }}
             QMenu::item:pressed {{ background-color: {colors['button_pressed']}; }}
