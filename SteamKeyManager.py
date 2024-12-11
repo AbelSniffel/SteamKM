@@ -16,16 +16,7 @@ import shutil
 import os
 from SteamKM_Version import CURRENT_BUILD
 from SteamKeyManager_Updater import check_for_updates, download_update
-from SteamKeyManager_Themes import Theme
-
-BUTTON_HEIGHT = 33
-DEFAULT_BR = 5 # Border Radius
-DEFAULT_BS = 0 # Border Size
-DEFAULT_CR = 4 # Checkbox Radius
-DEFAULT_SR = 3 # Scrollbar Radius
-DEFAULT_SW = 12 # Scrollbar Width
-COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-radius: 0px; border-right: 0px;"
-COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-left: 0px;"
+from SteamKeyManager_Themes import Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT, COLOR_PICKER_BUTTON_STYLE, COLOR_RESET_BUTTON_STYLE
 
 class ColorConfigDialog(QDialog):
     def __init__(self, parent=None, current_colors=None, theme="dark", border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
@@ -301,7 +292,7 @@ class SteamKeyManager(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Steam Key Manager V3 (Beta)")
-        self.resize(850, 600)
+        self.resize(860, 600)
         self.data_file = Path("steam_keys.json")
         self.config_file = Path("manager_settings.json")
         self.script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
