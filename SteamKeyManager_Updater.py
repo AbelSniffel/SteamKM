@@ -1,15 +1,16 @@
+# SteamKeyManager_Updater.py
 import requests
 import os
 import sys
 from PySide6.QtWidgets import QMessageBox
+from SteamKM_Version import CURRENT_BUILD  # Import the version number
 
 def check_for_updates():
     try:
         response = requests.get("https://api.github.com/repos/AbelSniffel/SteamKeyManager/releases/latest")
         response.raise_for_status()  # Raise an error for bad responses (4xx and 5xx)
-        latest_version = response.json().get("tag_name", "0.00")
-        current_version = "1.00"  # Ensure this matches your current version
-        if latest_version > current_version:
+        latest_version = response.json().get("tag_name", "0.0.0")
+        if latest_version > CURRENT_BUILD:
             return latest_version
     except requests.exceptions.RequestException as e:
         QMessageBox.critical(None, "Update Error", f"Failed to check for updates: {e}")
