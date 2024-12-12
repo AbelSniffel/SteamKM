@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QTextEdit, QTableWidget, QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit,
     QFileDialog, QComboBox, QColorDialog, QDialog, QFormLayout, QGroupBox, QSlider, QScrollArea, QSpacerItem, QSizePolicy
 )
-from PySide6.QtGui import QAction, QColor, QIcon
+from PySide6.QtGui import QAction, QColor, QIcon, QPixmap, QImage
 from PySide6.QtCore import Qt, QPoint, QTimer
 from pathlib import Path
 import json
@@ -17,6 +17,7 @@ import os
 from SteamKM_Version import CURRENT_BUILD
 from SteamKM_Updater import check_for_updates, download_update
 from SteamKM_Themes import Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT, COLOR_PICKER_BUTTON_STYLE, COLOR_RESET_BUTTON_STYLE
+from SteamKM_Icons import UPDATE_ICON, MENU_ICON, CUSTOMIZATION_ICON
 
 class ColorConfigDialog(QDialog):
     def __init__(self, parent=None, current_colors=None, theme="dark", border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
@@ -394,7 +395,7 @@ class SteamKeyManager(QMainWindow):
         # Add category filter drop-down
         self.category_filter = QComboBox()
         self.category_filter.setFixedHeight(BUTTON_HEIGHT)
-        self.category_filter.setFixedWidth(140)
+        self.category_filter.setFixedWidth(120)
         self.category_filter.addItem("All Categories")
         self.category_filter.addItems(self.categories)
         self.category_filter.currentTextChanged.connect(self.refresh_game_list)
@@ -464,7 +465,13 @@ class SteamKeyManager(QMainWindow):
         button = QPushButton(text)
         button.setFixedHeight(height)
         if icon:
-            button.setIcon(QIcon(icon))
+            # Use the hardcoded icons
+            if icon == os.path.join(self.icons_dir, "update.svg"):
+                button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(UPDATE_ICON.encode()))))
+            elif icon == os.path.join(self.icons_dir, "menu.svg"):
+                button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(MENU_ICON.encode()))))
+            elif icon == os.path.join(self.icons_dir, "customization.svg"):
+                button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(CUSTOMIZATION_ICON.encode()))))
         if fixed_width:
             button.setFixedWidth(fixed_width)
         button.clicked.connect(slot)
