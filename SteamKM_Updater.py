@@ -54,7 +54,8 @@ def download_update(latest_version):
         for asset in assets:
             if asset.get("name") == "SteamKM.exe":
                 download_url = asset.get("browser_download_url")
-                script_path = os.path.realpath(__file__)
+                # Get the path of the current executable
+                script_path = os.path.realpath(sys.executable)
                 update_path = script_path + ".new"
                 
                 with open(update_path, 'wb') as f:
