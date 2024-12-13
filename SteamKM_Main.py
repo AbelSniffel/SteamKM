@@ -448,14 +448,14 @@ class SteamKeyManager(QMainWindow):
         if latest_version is None:
             if not silent:
                 QMessageBox.warning(self, "Update Check", "Failed to check for updates. Please try again later.")
-        
         elif latest_version == CURRENT_BUILD:
             if not silent:
-                QMessageBox.information(self, "Update Check", f"You're already on the latest build {CURRENT_BUILD}")
+                QMessageBox.information(self, "Update Check", f"You're already on the latest build: {CURRENT_BUILD}")
         else:
             if not silent:
-                reply = QMessageBox.question(self, "New Version Available", f"New {latest_version} is available. Do you want to update?",
-                                            QMessageBox.Yes | QMessageBox.No)
+                reply = QMessageBox.question(self, "New Version Available", 
+                                        f"New {latest_version} is available. Do you want to update?",
+                                        QMessageBox.Yes | QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     download_update(latest_version)
             else:
