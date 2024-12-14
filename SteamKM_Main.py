@@ -1,11 +1,11 @@
 # SteamKM_Main.py
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
-    QTextEdit, QTableWidget, QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit,
+    QTextEdit, QTableWidget, QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit, QProgressBar,
     QFileDialog, QComboBox, QColorDialog, QDialog, QFormLayout, QGroupBox, QSlider, QScrollArea, QSpacerItem, QSizePolicy
 )
 from PySide6.QtGui import QAction, QColor, QIcon, QPixmap, QImage
-from PySide6.QtCore import Qt, QPoint, QTimer
+from PySide6.QtCore import Qt, QPoint, QTimer, QThread, Signal
 from pathlib import Path
 import json
 import sys
@@ -14,6 +14,7 @@ import re
 import uuid
 import shutil
 import os
+import requests
 from SteamKM_Version import CURRENT_BUILD
 from SteamKM_Updater import check_for_updates, download_update
 from SteamKM_Themes import Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT, COLOR_PICKER_BUTTON_STYLE, COLOR_RESET_BUTTON_STYLE
@@ -289,6 +290,165 @@ class EditGameDialog(QDialog):
             self.games[idx]["category"] = category_combo.currentText()
         self.accept()
 
+class UpdateDialog(QDialog):
+    def __init__(self, parent=None, current_version=CURRENT_BUILD):
+        super().__init__(parent)
+        self.setWindowTitle("Update Manager")
+        self.resize(400, 200)
+        self.current_version = current_version
+        self.latest_version = None
+        self.setup_ui()
+
+    def setup_ui(self):
+        main_layout = QVBoxLayout()
+
+        # Module 1: Version and Branch Selection
+        version_group = QGroupBox("Version Information")
+        version_layout = QVBoxLayout()
+        version_label = QLabel(f"Current Version: <b>{self.current_version}</b>")
+        version_layout.addWidget(version_label)
+
+        branch_layout = QHBoxLayout()
+        branch_label = QLabel("Selected Branch:")
+        self.branch_combo = QComboBox()
+        self.branch_combo.addItems(["Beta"]) 
+        self.branch_combo.setCurrentText("Beta")
+        self.branch_combo.setFixedSize(80, BUTTON_HEIGHT)
+        branch_layout.addWidget(branch_label)
+        branch_layout.addWidget(self.branch_combo)
+        version_layout.addLayout(branch_layout)
+        version_group.setLayout(version_layout)
+        main_layout.addWidget(version_group)
+
+        # Module 2: Check for Updates
+        check_update_group = QGroupBox("Check for Updates")
+        check_update_layout = QVBoxLayout()
+
+        self.check_updates_button = QPushButton("Search")
+        self.check_updates_button.setFixedSize(65, BUTTON_HEIGHT)
+        self.check_updates_button.clicked.connect(self.check_updates)
+
+        self.update_available_layout = QVBoxLayout()
+        self.update_available_layout.setAlignment(Qt.AlignCenter)
+        self.update_available_layout.setSpacing(10)
+
+        # Add the initial label
+        self.update_label = QLabel("Check for Available Updates")
+        self.update_label.setAlignment(Qt.AlignCenter)
+        #self.update_label.setStyleSheet("font-weight: bold;")
+        self.update_available_layout.addWidget(self.update_label)
+
+        self.download_button = QPushButton("Download and Install")
+        self.download_button.setFixedSize(160, BUTTON_HEIGHT)
+        self.download_button.clicked.connect(self.download_update)
+        self.download_button.setVisible(False)
+
+        # Create a QHBoxLayout for the buttons
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.check_updates_button)
+        button_layout.addWidget(self.download_button)
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setVisible(False)
+
+        self.update_available_layout.addLayout(button_layout)  # Add the button layout here
+        self.update_available_layout.addWidget(self.progress_bar)
+        check_update_layout.addLayout(self.update_available_layout)
+        check_update_group.setLayout(check_update_layout)
+        main_layout.addWidget(check_update_group)
+
+        # Module 3: Changelog
+        changelog_group = QGroupBox("Update Info")
+        changelog_layout = QVBoxLayout()
+        changelog_label = QLabel("Changelog:")
+        self.changelog_text = QTextEdit()
+        self.changelog_text.setReadOnly(True)
+        self.changelog_text.setFixedHeight(200)
+        changelog_layout.addWidget(changelog_label)
+        changelog_layout.addWidget(self.changelog_text)
+        changelog_group.setLayout(changelog_layout)
+        main_layout.addWidget(changelog_group)
+
+        # Created By Label (Right bottom corner)
+        created_by_label = QLabel("SteamKM by Stick-bon")
+        created_by_label.setAlignment(Qt.AlignRight)
+        main_layout.addWidget(created_by_label, alignment=Qt.AlignRight)
+
+        self.setLayout(main_layout)
+
+    def check_updates(self):
+        branch = self.branch_combo.currentText()
+        self.latest_version = check_for_updates(silent=True)
+        if self.latest_version is None:
+            self.update_label.setText("Failed to check for updates. Please try again later.")
+        elif self.latest_version == self.current_version:
+            self.update_label.setText("You're already on the latest build")
+        else:
+            self.update_label.setText(f"New Version: <b>{self.latest_version}</b>")
+            self.download_button.setText("Download and Install")
+            self.download_button.setVisible(True)
+            self.fetch_changelog(branch)
+
+    def fetch_changelog(self, branch):
+        try:
+            response = requests.get(f"https://raw.githubusercontent.com/AbelSniffel/SteamKM/{branch}/CHANGELOG.md")
+            if response.status_code == 200:
+                self.changelog_text.setPlainText(response.text)
+            else:
+                self.changelog_text.setPlainText("Failed to fetch changelog.")
+        except Exception as e:
+            self.changelog_text.setPlainText(f"Failed to fetch changelog: {str(e)}")
+
+    def download_update(self):
+        if self.latest_version:
+            self.download_button.setVisible(False)
+            self.progress_bar.setVisible(True)
+            self.progress_bar.setRange(0, 0)  # Indeterminate progress initially
+
+            # Create a worker thread for downloading
+            self.download_thread = DownloadThread(self.latest_version)
+            self.download_thread.progress_signal.connect(self.update_progress)
+            self.download_thread.finished_signal.connect(self.download_finished)
+            self.download_thread.error_signal.connect(self.download_error)
+            self.download_thread.start()
+        else:
+            QMessageBox.warning(self, "Update Error", "No update available to download.")
+
+    def update_progress(self, downloaded, total):
+        if total > 0:
+            self.progress_bar.setRange(0, total)
+            self.progress_bar.setValue(downloaded)
+
+    def download_finished(self, success):
+        self.progress_bar.setVisible(False)
+        if success:
+            QMessageBox.information(self, "Download Complete", f"Update {self.latest_version} downloaded successfully.")
+        else:
+            QMessageBox.warning(self, "Download Failed", f"Failed to download update {self.latest_version}.")
+
+    def download_error(self, error_message):
+        self.progress_bar.setVisible(False)
+        QMessageBox.critical(self, "Download Error", error_message)
+
+class DownloadThread(QThread):
+    progress_signal = Signal(int, int)  # (downloaded, total)
+    finished_signal = Signal(bool)  # (success)
+    error_signal = Signal(str)  # (error_message)
+
+    def __init__(self, latest_version, parent=None):
+        super().__init__(parent)
+        self.latest_version = latest_version
+
+    def run(self):
+        try:
+            success = download_update(self.latest_version, self.update_progress)
+            self.finished_signal.emit(success)
+        except Exception as e:
+            self.error_signal.emit(str(e))
+
+    def update_progress(self, downloaded, total):
+        self.progress_signal.emit(downloaded, total)
+
 class SteamKeyManager(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -312,8 +472,6 @@ class SteamKeyManager(QMainWindow):
         self.checkbox_radius = DEFAULT_CR
         self.scrollbar_width = DEFAULT_SW
         self.scroll_radius = DEFAULT_SR
-        self.update_label = QLabel("Update Available")
-        self.update_label.setVisible(False)  # Initially hidden
         
         # Load data
         self.load_key_data()
@@ -321,7 +479,6 @@ class SteamKeyManager(QMainWindow):
         
         # Set up UI and Check for Updates
         self.setup_ui()
-        self.start_update_check()
         
         # Apply initial theme
         if self.using_custom_colors:
@@ -356,7 +513,7 @@ class SteamKeyManager(QMainWindow):
         theme_layout.addWidget(self.toggle_theme_checkbox)
 
         # Buttons
-        self.update_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.check_updates, 
+        self.update_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_update_dialog, 
             icon=os.path.join(self.icons_dir, "update.svg"))
         self.color_config_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_color_config_dialog, 
             icon=os.path.join(self.icons_dir, "customization.svg"))
@@ -368,7 +525,6 @@ class SteamKeyManager(QMainWindow):
         self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected_games)
 
         theme_layout.addSpacerItem(spacer)
-        theme_layout.addWidget(self.update_label)
         theme_layout.addWidget(self.update_button)
         theme_layout.addWidget(self.color_config_button)
         theme_layout.addWidget(self.hamburger_menu_button)
@@ -439,27 +595,10 @@ class SteamKeyManager(QMainWindow):
             self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
         else:
             self.apply_theme(self.theme)
-    
-    def start_update_check(self):
-        QTimer.singleShot(1500, lambda: self.check_updates(silent=True))
 
-    def check_updates(self, silent=False):
-        latest_version = check_for_updates(silent=silent)
-        if latest_version is None:
-            if not silent:
-                QMessageBox.warning(self, "Update Check", "Failed to check for updates. Please try again later.")
-        elif latest_version == CURRENT_BUILD:
-            if not silent:
-                QMessageBox.information(self, "Update Check", f"You're already on the latest build: {CURRENT_BUILD}")
-        else:
-            if not silent:
-                reply = QMessageBox.question(self, "New Version Available", 
-                                        f"New {latest_version} is available. Do you want to update?",
-                                        QMessageBox.Yes | QMessageBox.No)
-                if reply == QMessageBox.Yes:
-                    download_update(latest_version)
-            else:
-                self.update_label.setVisible(True)
+    def open_update_dialog(self):
+        dialog = UpdateDialog(self, CURRENT_BUILD)
+        dialog.exec()
     
     def create_button(self, text, height, slot, icon=None, fixed_width=None):
         button = QPushButton(text)
@@ -483,11 +622,6 @@ class SteamKeyManager(QMainWindow):
 
     def show_hamburger_menu(self):
         menu = QMenu(self)
-
-        version_action = QAction(f"Version: {CURRENT_BUILD}", self)
-        version_action.setEnabled(False)
-        menu.addAction(version_action)
-        menu.addSeparator()
 
         import_action = QAction("Import Games", self)
         import_action.triggered.connect(self.import_games)

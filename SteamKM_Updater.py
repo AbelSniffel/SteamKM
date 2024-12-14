@@ -1,4 +1,3 @@
-# SteamKM_Updater.py
 import requests
 import os
 import sys
@@ -17,13 +16,13 @@ except ImportError:
     GITHUB_TOKEN = None
     logging.debug("GitHub token not found. Using unauthenticated requests.")
 
-def check_for_updates(silent=False):
+def check_for_updates(silent=False, branch="Beta"):
     headers = {}
     if GITHUB_TOKEN:
         headers["Authorization"] = f"token {GITHUB_TOKEN}"
     
     try:
-        response = requests.get("https://api.github.com/repos/AbelSniffel/SteamKM/releases/latest", headers=headers)
+        response = requests.get(f"https://api.github.com/repos/AbelSniffel/SteamKM/releases/latest", headers=headers)
         response.raise_for_status()
         latest_version = response.json().get("tag_name", "0.0.0")
         logging.debug(f"Latest version from GitHub: {latest_version}")
@@ -40,7 +39,7 @@ def check_for_updates(silent=False):
             QMessageBox.critical(None, "Update Error", str(e))
         return None
 
-def download_update(latest_version):
+def download_update(latest_version, progress_callback, branch="Beta"):
     headers = {}
     if GITHUB_TOKEN:
         headers["Authorization"] = f"token {GITHUB_TOKEN}"
@@ -58,8 +57,23 @@ def download_update(latest_version):
                 script_path = os.path.realpath(sys.executable)
                 update_path = script_path + ".new"
                 
+                # Get the total file size
+                file_size = int(asset.get("size", 0))
+                if file_size == 0:
+                    raise Exception("Failed to get file size.")
+                
+                # Initialize progress callback
+                progress_callback(0, file_size)
+                
                 with open(update_path, 'wb') as f:
-                    f.write(requests.get(download_url, headers=headers).content)
+                    with requests.get(download_url, headers=headers, stream=True) as r:
+                        r.raise_for_status()
+                        downloaded_size = 0
+                        for chunk in r.iter_content(chunk_size=8192):
+                            if chunk:  # filter out keep-alive new chunks
+                                f.write(chunk)
+                                downloaded_size += len(chunk)
+                                progress_callback(downloaded_size, file_size)
                 
                 backup_path = script_path + ".bak"
                 if os.path.exists(backup_path):
@@ -68,11 +82,14 @@ def download_update(latest_version):
                 
                 os.rename(update_path, script_path)
                 
-                QMessageBox.information(None, "Update Success", f"Update to version {latest_version} successful. Please restart the application.")
-                return
+                logging.info(f"Update to version {latest_version} successful.")
+                return True  # Indicate success
         
-        QMessageBox.critical(None, "Update Error", f"No matching asset found for version {latest_version}")
+        logging.error(f"No matching asset found for version {latest_version}")
+        raise Exception("No matching asset found for version {latest_version}")
     except requests.exceptions.RequestException as e:
-        QMessageBox.critical(None, "Update Error", f"Failed to download update: {e}")
+        logging.error(f"Failed to download update: {e}")
+        raise e
     except Exception as e:
-        QMessageBox.critical(None, "Update Error", f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}")
+        raise e
