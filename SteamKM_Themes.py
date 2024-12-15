@@ -29,7 +29,7 @@ class Theme:
             "text_color": ("white", "black"),
             "add_games_background": ("#404040", "#e6eefa"),
             "search_bar_background": ("#404040", "#e6eefa"),
-            "found_games_background": ("#404040", "#e6eefa"),
+            "label_background": ("#404040", "#e6eefa"),
             "scrollbar_background": ("#404040", "#e1e9f2"),
             "scrollbar_handle": ("#62a88e", "#a6c7ff"),
             "button_background": ("#525252", "#d6e8ff"),
@@ -65,12 +65,12 @@ class Theme:
 
         theme_stylesheet = f"""
             QWidget {{ background-color: {colors['main_background']}; color: {colors['text_color']}; border-radius: {BORDER_RADIUS}px }}
-            #foundCountLabel {{ background-color: {colors['found_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
+            #FoundCountLabel {{ background-color: {colors['label_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
+            #DeepTitle {{ background-color: {colors['label_background']}; padding: 6px; }}
             QTextEdit {{ background-color: {colors['add_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
             QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
-            QGroupBox {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; padding-top: 20px; }}
-            QGroupBox::title {{ background-color: {colors['generic_border_color']}; padding: 4px; subcontrol-origin: margin; subcontrol-position: top left; border-top-left-radius: {BORDER_RADIUS}px; border-bottom-right-radius: 6px; border: {MINIMUM_BORDER_SIZE}px solid {colors['generic_border_color']}; }}
-            QComboBox {{ background-color: {colors['combobox_background']}; }}
+            QGroupBox {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; margin-right: 5px;}}
+            QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding-left: 10px }}
             QComboBox:item:selected {{ background-color: {colors['table_item_selected']}; padding: 0 2px; }}
             QComboBox QAbstractItemView {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
             QComboBox::drop-down {{ height: 0; }}
@@ -83,7 +83,7 @@ class Theme:
             QCheckBox::indicator:unchecked {{ background-color: {colors['checkbox_background_unchecked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
             QCheckBox::indicator:checked {{ background-color: {colors['checkbox_background_checked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
             QCheckBox::indicator:disabled {{ background-color: #ff4d4d; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
-            QHeaderView {{ background-color: {colors['table_background']};; border: none; gridline-color: {colors['table_gridline_color']}; }}
+            QHeaderView {{ background-color: {colors['table_background']}; border: none; gridline-color: {colors['table_gridline_color']}; }}
             QHeaderView::section {{ background-color: {colors['table_background']}; }}
             QTableCornerButton::section {{ background-color: {colors['table_background']}; }}
             QTableWidget {{ background-color: {colors['table_background']}; border: {MINIMUM_BORDER_SIZE}px solid {colors['table_border_color']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
@@ -95,6 +95,8 @@ class Theme:
             QScrollBar::handle {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px }}
             QScrollBar::add-page, QScrollBar::sub-page {{ background-color: none; }}
             QScrollBar::add-line, QScrollBar::sub-line {{ width: 0px; height: 0px; }}
+            QProgressBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; text-align: center; height: 6px }}
+            QProgressBar::chunk {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px }}
             QMenu {{ background-color: {colors['main_background']}; padding: {PADDING}px; border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
             QMenu::item {{ padding: {PADDING}px 15px; border-radius: 4px; }}
             QMenu::item:selected {{ background-color: {colors['button_hover']}; }}

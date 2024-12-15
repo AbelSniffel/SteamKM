@@ -1,2 +1,2 @@
 # SteamKM_Version.py
-CURRENT_BUILD = "0.4.4-beta"
+CURRENT_BUILD = "0.4.5-beta"
