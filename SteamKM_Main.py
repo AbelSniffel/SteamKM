@@ -24,7 +24,7 @@ class ColorConfigDialog(QDialog):
     def __init__(self, parent=None, current_colors=None, theme="dark", border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
         super().__init__(parent)
         self.setWindowTitle("Color Customization")
-        self.resize(500, 700)
+        self.resize(475, 700)
         self.theme = theme
         self.current_colors = current_colors if current_colors else {}
         self.border_radius = border_radius
@@ -49,9 +49,9 @@ class ColorConfigDialog(QDialog):
             ("General Colors", [
                 ("Text", "text_color"),
                 ("Background", "main_background"),
+                ("Label Background", "label_background"),
                 ("Search Background", "search_bar_background"),
                 ("Add Games Background", "add_games_background"),
-                ("Found Games Background", "found_games_background"),
             ]),
             ("Border Colors", [
                 ("Generic Border", "generic_border_color"),
@@ -59,13 +59,13 @@ class ColorConfigDialog(QDialog):
                 ("Game List Border", "table_border_color"),
             ]),
             ("Game List", [
-                ("Game List Background", "table_background"),
-                ("Game List Gridline", "table_gridline_color"),
-                ("Game List Selected Item", "table_item_selected"),
+                ("Gridline", "table_gridline_color"),
+                ("Background", "table_background"),
+                ("Selected Item", "table_item_selected"),
             ]),
-            ("Scrollbar", [
-                ("Scrollbar", "scrollbar_handle"),
-                ("Scrollbar Background", "scrollbar_background"),
+            ("Scrollbar and Progress bar", [
+                ("Handle", "scrollbar_handle"),
+                ("Background", "scrollbar_background"),
             ]),
             ("Interactables", [
                 ("Button Hover", "button_hover"),
@@ -79,10 +79,10 @@ class ColorConfigDialog(QDialog):
         ]
 
         for title, elements in groups:
-            group = QGroupBox(title)
-            self.setup_group(group, elements)
+            group = QGroupBox()
+            self.setup_group(group, title, elements)
             scroll_area_layout.addWidget(group)
-            scroll_area_layout.addSpacing(10)
+            scroll_area_layout.addSpacing(20)
 
         self.setup_border_group()
         scroll_area_layout.addWidget(self.border_group)
@@ -93,10 +93,23 @@ class ColorConfigDialog(QDialog):
         apply_button.clicked.connect(self.apply_colors)
         main_layout.addWidget(apply_button)
 
-    def setup_group(self, group, elements):
-        layout = QFormLayout()
+    def setup_group(self, group, title, elements):
+        # Create a vertical layout for the group
+        layout = QVBoxLayout()
         group.setLayout(layout)
-        [self.add_color_picker(layout, label, key) for label, key in elements]
+
+        # Add the title as a label inside the box
+        title_label = QLabel(title)
+        title_label.setObjectName("DeepTitle")
+        title_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title_label)
+        layout.addSpacing(5)
+
+        # Add the elements below the title
+        form_layout = QFormLayout()
+        for label, key in elements:
+            self.add_color_picker(form_layout, label, key)
+        layout.addLayout(form_layout)
 
     def add_color_picker(self, layout, label, key):
         color_name = self.current_colors.get(key, "")
@@ -124,8 +137,15 @@ class ColorConfigDialog(QDialog):
             self.update_default_button_style(button)
 
     def setup_border_group(self):
-        self.border_group = QGroupBox("Border Size and Radius")
+        self.border_group = QGroupBox()
         layout = QVBoxLayout()
+
+        # Add the title as a label inside the box
+        border_group = QLabel("Border Size and Radius")
+        border_group.setObjectName("DeepTitle")
+        border_group.setAlignment(Qt.AlignCenter)
+        layout.addWidget(border_group)
+        layout.addSpacing(5)
         self.border_group.setLayout(layout)
 
         sliders = [
@@ -303,7 +323,7 @@ class UpdateDialog(QDialog):
         main_layout = QVBoxLayout()
 
         # Module 1: Version and Branch Selection
-        version_group = QGroupBox("Version Information")
+        version_group = QGroupBox()
         version_layout = QVBoxLayout()
         version_label = QLabel(f"Current Version: <b>{self.current_version}</b>")
         version_layout.addWidget(version_label)
@@ -321,7 +341,7 @@ class UpdateDialog(QDialog):
         main_layout.addWidget(version_group)
 
         # Module 2: Check for Updates
-        check_update_group = QGroupBox("Check for Updates")
+        check_update_group = QGroupBox()
         check_update_layout = QVBoxLayout()
 
         self.check_updates_button = QPushButton("Search")
@@ -332,10 +352,8 @@ class UpdateDialog(QDialog):
         self.update_available_layout.setAlignment(Qt.AlignCenter)
         self.update_available_layout.setSpacing(10)
 
-        # Add the initial label
         self.update_label = QLabel("Check for Available Updates")
         self.update_label.setAlignment(Qt.AlignCenter)
-        #self.update_label.setStyleSheet("font-weight: bold;")
         self.update_available_layout.addWidget(self.update_label)
 
         self.download_button = QPushButton("Download and Install")
@@ -343,22 +361,27 @@ class UpdateDialog(QDialog):
         self.download_button.clicked.connect(self.download_update)
         self.download_button.setVisible(False)
 
-        # Create a QHBoxLayout for the buttons
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.check_updates_button)
         button_layout.addWidget(self.download_button)
+        self.update_available_layout.addLayout(button_layout)
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-
-        self.update_available_layout.addLayout(button_layout)  # Add the button layout here
         self.update_available_layout.addWidget(self.progress_bar)
         check_update_layout.addLayout(self.update_available_layout)
         check_update_group.setLayout(check_update_layout)
         main_layout.addWidget(check_update_group)
 
+        # Temporary Progress Bar for Testing
+        temp_progress_bar = QProgressBar()
+        temp_progress_bar.setRange(0, 100)
+        temp_progress_bar.setValue(35) # Virtual Progress
+        temp_progress_bar.setVisible(False) # Set to True for testing
+        self.update_available_layout.addWidget(temp_progress_bar)
+
         # Module 3: Changelog
-        changelog_group = QGroupBox("Update Info")
+        changelog_group = QGroupBox()
         changelog_layout = QVBoxLayout()
         changelog_label = QLabel("Changelog:")
         self.changelog_text = QTextEdit()
@@ -369,7 +392,7 @@ class UpdateDialog(QDialog):
         changelog_group.setLayout(changelog_layout)
         main_layout.addWidget(changelog_group)
 
-        # Created By Label (Right bottom corner)
+        # Created By Label
         created_by_label = QLabel("SteamKM by Stick-bon")
         created_by_label.setAlignment(Qt.AlignRight)
         main_layout.addWidget(created_by_label, alignment=Qt.AlignRight)
@@ -422,7 +445,7 @@ class UpdateDialog(QDialog):
     def download_finished(self, success):
         self.progress_bar.setVisible(False)
         if success:
-            QMessageBox.information(self, "Download Complete", f"Update {self.latest_version} downloaded successfully.")
+            QMessageBox.information(self, "Download Complete", f"Update {self.latest_version} downloaded successfully. Please restart the program")
         else:
             QMessageBox.warning(self, "Download Failed", f"Failed to download update {self.latest_version}.")
 
@@ -559,7 +582,7 @@ class SteamKeyManager(QMainWindow):
         
         # Found Games Count label
         self.found_count_label = QLabel("Found Games: 0")
-        self.found_count_label.setObjectName("foundCountLabel")
+        self.found_count_label.setObjectName("FoundCountLabel")
         self.found_count_label.setFixedHeight(BUTTON_HEIGHT)
         search_layout.addWidget(self.found_count_label)
 
