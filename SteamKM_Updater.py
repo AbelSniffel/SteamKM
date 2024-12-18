@@ -2,7 +2,7 @@
 from PySide6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QComboBox, QPushButton, QProgressBar, QTextEdit
 from PySide6.QtCore import Qt, QThread, Signal, QTimer
 from SteamKM_Version import CURRENT_BUILD
-from SteamKM_Themes import Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT, COLOR_PICKER_BUTTON_STYLE, COLOR_RESET_BUTTON_STYLE
+from SteamKM_Themes import BUTTON_HEIGHT
 from packaging.version import parse, InvalidVersion
 from time import time
 import requests
@@ -14,7 +14,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 try:
-    from github_token import GITHUB_TOKEN
+    from github_token import GITHUB_TOKEN # type: ignore
     logging.debug("GitHub token loaded successfully.")
 except ImportError:
     GITHUB_TOKEN = None
