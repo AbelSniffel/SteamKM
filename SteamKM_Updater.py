@@ -2,7 +2,7 @@
 from PySide6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QComboBox, QPushButton, QProgressBar, QTextEdit
 from PySide6.QtCore import Qt, QThread, Signal, QTimer
 from SteamKM_Version import CURRENT_BUILD
-from SteamKM_Themes import BUTTON_HEIGHT
+from SteamKM_Themes import Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT, COLOR_PICKER_BUTTON_STYLE, COLOR_RESET_BUTTON_STYLE
 from packaging.version import parse, InvalidVersion
 from time import time
 import requests
@@ -14,7 +14,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 try:
-    from github_token import GITHUB_TOKEN # type: ignore
+    from github_token import GITHUB_TOKEN
     logging.debug("GitHub token loaded successfully.")
 except ImportError:
     GITHUB_TOKEN = None
@@ -98,6 +98,70 @@ def download_update(latest_version, progress_callback, branch="Beta"):
         logging.error(f"An error occurred: {e}")
         raise e
 
+def is_update_available(current_version=CURRENT_BUILD):
+    latest_version = check_for_updates(silent=True)
+    if latest_version and latest_version != current_version:
+        return True
+    return False
+
+class UpdateManager:
+    def __init__(self, parent=None, current_version=CURRENT_BUILD):
+        self.parent = parent
+        self.current_version = current_version
+        self.update_available = False
+        self.update_check_thread = UpdateCheckThread()
+        self.update_check_thread.update_available.connect(self.on_update_available)
+        self.update_check_thread.finished.connect(self.update_check_thread.deleteLater)
+        self.update_check_timer = QTimer(self.parent)
+        self.update_check_timer.setSingleShot(True)
+        self.update_check_timer.timeout.connect(self.start_update_check)
+        self.update_check_timer.start(100)
+
+    def start_update_check(self):
+        self.update_check_thread.start()
+
+    def on_update_available(self, available):
+        self.update_available = available
+        if self.update_available:
+            update_available_label = self.parent.findChild(QLabel, "update_available_label")
+            if update_available_label:
+                update_available_label.setVisible(True)
+
+class UpdateCheckThread(QThread):
+    update_available = Signal(bool)
+
+    def run(self):
+        available = is_update_available()
+        self.update_available.emit(available)
+
+class DownloadThread(QThread):
+    progress_signal = Signal(int, int, float) # (downloaded, total, estimated_time)
+    finished_signal = Signal(bool)  # (success)
+    error_signal = Signal(str)  # (error_message)
+
+    def __init__(self, latest_version, parent=None):
+        super().__init__(parent)
+        self.latest_version = latest_version
+        self.start_time = None
+
+    def run(self):
+        try:
+            self.start_time = time()
+            success = download_update(self.latest_version, self.update_progress)
+            self.finished_signal.emit(success)
+        except Exception as e:
+            self.error_signal.emit(str(e))
+
+    def update_progress(self, downloaded, total):
+        elapsed_time = time() - self.start_time if self.start_time else 0
+        if elapsed_time > 0 and downloaded > 0:
+            download_speed = downloaded / elapsed_time # bytes per second
+            remaining_bytes = total - downloaded
+            estimated_time = remaining_bytes / download_speed if download_speed > 0 else 0
+        else:
+            estimated_time = 0
+        self.progress_signal.emit(downloaded, total, estimated_time)
+
 class UpdateDialog(QDialog):
     def __init__(self, parent=None, current_version=CURRENT_BUILD):
         super().__init__(parent)
@@ -128,7 +192,7 @@ class UpdateDialog(QDialog):
         self.branch_combo.addItems(["Beta"]) 
         self.branch_combo.setCurrentText("Beta")
         self.branch_combo.setFixedSize(80, BUTTON_HEIGHT)
-        self.branch_combo.currentIndexChanged.connect(self.fetch_changelog) # Fetch changelog when branch changes
+        self.branch_combo.currentIndexChanged.connect(self.fetch_changelog) # Fetch changelog when changes
         branch_layout.addWidget(branch_label)
         branch_layout.addWidget(self.branch_combo)
         version_layout.addLayout(branch_layout)
@@ -151,6 +215,11 @@ class UpdateDialog(QDialog):
         self.update_label.setAlignment(Qt.AlignCenter)
         self.update_available_layout.addWidget(self.update_label)
 
+        # Add version combo box
+        self.version_combo = QComboBox()
+        self.version_combo.setFixedSize(100, BUTTON_HEIGHT)
+        self.version_combo.setVisible(False)
+
         self.download_button = QPushButton("Download and Install")
         self.download_button.setFixedSize(160, BUTTON_HEIGHT)
         self.download_button.clicked.connect(self.download_update)
@@ -163,6 +232,7 @@ class UpdateDialog(QDialog):
 
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.check_updates_button)
+        button_layout.addWidget(self.version_combo)  # Add version combo box to layout
         button_layout.addWidget(self.download_button)
         button_layout.addWidget(self.cancel_button)
         self.update_available_layout.addLayout(button_layout)
@@ -173,13 +243,6 @@ class UpdateDialog(QDialog):
         check_update_layout.addLayout(self.update_available_layout)
         check_update_group.setLayout(check_update_layout)
         main_layout.addWidget(check_update_group)
-
-        # Temporary Progress Bar for Testing
-        temp_progress_bar = QProgressBar()
-        temp_progress_bar.setRange(0, 100)
-        temp_progress_bar.setValue(35) # Virtual Progress
-        temp_progress_bar.setVisible(False) # Set to True for testing
-        self.update_available_layout.addWidget(temp_progress_bar)
 
         # Module 3: Changelog
         changelog_group = QGroupBox()
@@ -213,21 +276,34 @@ class UpdateDialog(QDialog):
 
     def check_updates(self):
         branch = self.branch_combo.currentText()
-        self.latest_version = check_for_updates(silent=True)
-        if self.latest_version is None:
-            self.update_label.setText("Failed to check for updates. Please try again later.")
-        elif self.latest_version == self.current_version:
-            self.update_label.setText("You're already on the latest build")
-        else:
-            self.update_label.setText(f"New Version: <b>{self.latest_version}</b>")
-            self.download_button.setText("Download and Install")
+        headers = {}
+        if GITHUB_TOKEN:
+            headers["Authorization"] = f"token {GITHUB_TOKEN}"
+        
+        try:
+            response = requests.get(f"https://api.github.com/repos/AbelSniffel/SteamKM/releases", headers=headers)
+            response.raise_for_status()
+            releases = response.json()
+            versions = [release["tag_name"] for release in releases]
+            self.version_combo.clear()
+            self.version_combo.addItems(versions)
+            self.version_combo.setVisible(True)
+            if self.current_version in versions:
+                self.version_combo.setCurrentText(self.current_version)
+            self.update_label.setText("Select a version to download.")
             self.download_button.setVisible(True)
+        except requests.exceptions.RequestException as e:
+            self.update_label.setText("Failed to check for updates. Please try again later.")
+            logging.error(f"Error checking for updates: {e}")
 
     def download_update(self):
-        if self.latest_version and self.latest_version != self.current_version:
+        selected_version = self.version_combo.currentText()
+        if selected_version:
+            self.latest_version = selected_version
             self.update_label.setText("Starting Download...")
             self.download_button.setVisible(False)
             self.check_updates_button.setVisible(False)
+            self.version_combo.setVisible(False)
             self.cancel_button.setVisible(True)
             self.progress_bar.setVisible(True)
             self.progress_bar.setRange(0, 0)  # Indeterminate progress initially
@@ -239,7 +315,7 @@ class UpdateDialog(QDialog):
             self.download_thread.error_signal.connect(self.download_error)
             self.download_thread.start()
         else:
-            QMessageBox.warning(self, "Update Error", "No update to download.")
+            QMessageBox.warning(self, "Update Error", "No version selected for download.")
 
     def cancel_download(self):
         if self.download_thread is not None and self.download_thread.isRunning():
@@ -250,6 +326,7 @@ class UpdateDialog(QDialog):
             self.progress_bar.setVisible(False)
             self.cancel_button.setVisible(False)
             self.check_updates_button.setVisible(True)
+            self.version_combo.setVisible(True)
             self.download_button.setVisible(True)
         else:
             QMessageBox.warning(self, "Download Not Running", "No download is currently running.")
@@ -276,33 +353,7 @@ class UpdateDialog(QDialog):
         self.progress_bar.setVisible(False)
         self.cancel_button.setVisible(False)
         self.check_updates_button.setVisible(True)
+        self.version_combo.setVisible(True)
         self.download_button.setVisible(True)
+        self.update_label.setText("Download Error")
         QMessageBox.critical(self, "Download Error", error_message)
-
-class DownloadThread(QThread):
-    progress_signal = Signal(int, int, float) # (downloaded, total, estimated_time)
-    finished_signal = Signal(bool)  # (success)
-    error_signal = Signal(str)  # (error_message)
-
-    def __init__(self, latest_version, parent=None):
-        super().__init__(parent)
-        self.latest_version = latest_version
-        self.start_time = None
-
-    def run(self):
-        try:
-            self.start_time = time()
-            success = download_update(self.latest_version, self.update_progress)
-            self.finished_signal.emit(success)
-        except Exception as e:
-            self.error_signal.emit(str(e))
-
-    def update_progress(self, downloaded, total):
-        elapsed_time = time() - self.start_time if self.start_time else 0
-        if elapsed_time > 0 and downloaded > 0:
-            download_speed = downloaded / elapsed_time # bytes per second
-            remaining_bytes = total - downloaded
-            estimated_time = remaining_bytes / download_speed if download_speed > 0 else 0
-        else:
-            estimated_time = 0
-        self.progress_signal.emit(downloaded, total, estimated_time)

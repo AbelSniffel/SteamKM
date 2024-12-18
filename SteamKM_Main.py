@@ -13,9 +13,9 @@ from PySide6.QtWidgets import (
     QGroupBox, QScrollArea, QSpacerItem, QSizePolicy
 )
 from PySide6.QtGui import QAction, QIcon, QPixmap, QImage
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import Qt, QPoint, QTimer, QThread, Signal
 from SteamKM_Version import CURRENT_BUILD
-from SteamKM_Updater import UpdateDialog
+from SteamKM_Updater import UpdateDialog, UpdateManager
 from SteamKM_Themes import ColorConfigDialog, Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT
 from SteamKM_Icons import UPDATE_ICON, MENU_ICON, CUSTOMIZATION_ICON
 
@@ -40,7 +40,7 @@ class EditGameDialog(QDialog):
         self.group_boxes = []
 
         for idx, game in enumerate(self.games):
-            group_box = QGroupBox(f"Game {idx + 1}")
+            group_box = QGroupBox()
             form_layout = QFormLayout()
 
             title_edit = QLineEdit(game["title"])
@@ -82,6 +82,10 @@ class EditGameDialog(QDialog):
             self.games[idx]["category"] = category_combo.currentText()
         self.accept()
 
+class PlainTextEdit(QTextEdit): # This removes the rich text support, downside being a miniscule amount of delay after each keypress
+    def insertFromMimeData(self, source):
+        self.insertPlainText(source.text())
+
 class SteamKeyManager(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -112,6 +116,7 @@ class SteamKeyManager(QMainWindow):
         
         # Set up UI and Check for Updates
         self.setup_ui()
+        self.update_manager = UpdateManager(self, CURRENT_BUILD)
         
         # Apply initial theme
         if self.using_custom_colors:
@@ -144,6 +149,13 @@ class SteamKeyManager(QMainWindow):
         self.toggle_theme_checkbox.setChecked(self.using_custom_colors)
         self.toggle_theme_checkbox.stateChanged.connect(self.toggle_custom_theme)
         theme_layout.addWidget(self.toggle_theme_checkbox)
+        theme_layout.addSpacerItem(spacer)
+
+        # Update Available Label
+        self.update_available_label = QLabel("Update Available")
+        self.update_available_label.setObjectName("update_available_label")
+        self.update_available_label.setVisible(False)
+        theme_layout.addWidget(self.update_available_label)
 
         # Buttons
         self.update_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_update_dialog, 
@@ -157,7 +169,6 @@ class SteamKeyManager(QMainWindow):
         self.copy_button = self.create_button("Copy Selected Keys", BUTTON_HEIGHT, self.copy_selected_keys)
         self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected_games)
 
-        theme_layout.addSpacerItem(spacer)
         theme_layout.addWidget(self.update_button)
         theme_layout.addWidget(self.color_config_button)
         theme_layout.addWidget(self.hamburger_menu_button)
@@ -167,7 +178,7 @@ class SteamKeyManager(QMainWindow):
         button_layout.addWidget(self.remove_button)
         
         # Add Games Input Box
-        self.input_text = QTextEdit()
+        self.input_text = PlainTextEdit()
         self.input_text.setPlaceholderText("Enter games (one per line, format: Title XXXXX-XXXXX-XXXXX)")
         self.input_text.setLineWrapMode(QTextEdit.NoWrap)
         self.input_text.setFixedHeight(75)
@@ -232,18 +243,18 @@ class SteamKeyManager(QMainWindow):
     def open_update_dialog(self):
         dialog = UpdateDialog(self, CURRENT_BUILD)
         dialog.exec()
-    
+
     def create_button(self, text, height, slot, icon=None, fixed_width=None):
+        icon_map = {
+            os.path.join(self.icons_dir, "update.svg"): UPDATE_ICON,
+            os.path.join(self.icons_dir, "menu.svg"): MENU_ICON,
+            os.path.join(self.icons_dir, "customization.svg"): CUSTOMIZATION_ICON
+        }
+        
         button = QPushButton(text)
         button.setFixedHeight(height)
         if icon:
-            # Use the hardcoded icons
-            if icon == os.path.join(self.icons_dir, "update.svg"):
-                button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(UPDATE_ICON.encode()))))
-            elif icon == os.path.join(self.icons_dir, "menu.svg"):
-                button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(MENU_ICON.encode()))))
-            elif icon == os.path.join(self.icons_dir, "customization.svg"):
-                button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(CUSTOMIZATION_ICON.encode()))))
+            button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(icon_map[icon].encode()))))
         if fixed_width:
             button.setFixedWidth(fixed_width)
         button.clicked.connect(slot)
