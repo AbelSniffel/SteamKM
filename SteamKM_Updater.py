@@ -217,7 +217,7 @@ class UpdateDialog(QDialog):
 
         # Add version combo box
         self.version_combo = QComboBox()
-        self.version_combo.setFixedSize(100, BUTTON_HEIGHT)
+        self.version_combo.setFixedSize(125, BUTTON_HEIGHT)
         self.version_combo.setVisible(False)
 
         self.download_button = QPushButton("Download and Install")
@@ -237,7 +237,7 @@ class UpdateDialog(QDialog):
         button_layout.addWidget(self.cancel_button)
         self.update_available_layout.addLayout(button_layout)
 
-        self.progress_bar = QProgressBar()
+        self.progress_bar = QProgressBar() 
         self.progress_bar.setVisible(False)
         self.update_available_layout.addWidget(self.progress_bar)
         check_update_layout.addLayout(self.update_available_layout)
@@ -286,7 +286,15 @@ class UpdateDialog(QDialog):
             releases = response.json()
             versions = [release["tag_name"] for release in releases]
             self.version_combo.clear()
-            self.version_combo.addItems(versions)
+            
+            # Add "(latest)" to the latest version
+            latest_version = versions[0] if versions else None
+            for version in versions:
+                if version == latest_version:
+                    self.version_combo.addItem(f"{version} (latest)")
+                else:
+                    self.version_combo.addItem(version)
+            
             self.version_combo.setVisible(True)
             if self.current_version in versions:
                 self.version_combo.setCurrentText(self.current_version)
