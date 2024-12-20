@@ -1,5 +1,3 @@
-Changelog:
-
 0.4.5-beta
 + Added themed download bar
 * Tweaked the GUI a bit
