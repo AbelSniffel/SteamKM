@@ -1,12 +1,4 @@
 # SteamKM_Main.py
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
-    QTextEdit, QTableWidget, QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit, QProgressBar,
-    QFileDialog, QComboBox, QColorDialog, QDialog, QFormLayout, QGroupBox, QSlider, QScrollArea, QSpacerItem, QSizePolicy
-)
-from PySide6.QtGui import QAction, QColor, QIcon, QPixmap, QImage
-from PySide6.QtCore import Qt, QPoint, QTimer, QThread, Signal
-from pathlib import Path
 import json
 import sys
 import pyperclip
@@ -14,238 +6,25 @@ import re
 import uuid
 import shutil
 import os
-import requests
+from pathlib import Path
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QTextEdit, QTableWidget, 
+    QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit, QFileDialog, QComboBox, QDialog, QFormLayout, 
+    QGroupBox, QScrollArea, QSpacerItem, QSizePolicy, QDockWidget, QToolBar
+)
+from PySide6.QtGui import QAction, QIcon, QPixmap, QImage
+from PySide6.QtCore import Qt, QPoint, QTimer, QThread, Signal
 from SteamKM_Version import CURRENT_BUILD
-from SteamKM_Updater import check_for_updates, download_update
-from SteamKM_Themes import Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT, COLOR_PICKER_BUTTON_STYLE, COLOR_RESET_BUTTON_STYLE
+from SteamKM_Updater import UpdateDialog, UpdateManager
+from SteamKM_Themes import ColorConfigDialog, Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT
 from SteamKM_Icons import UPDATE_ICON, MENU_ICON, CUSTOMIZATION_ICON
 
-class ColorConfigDialog(QDialog):
-    def __init__(self, parent=None, current_colors=None, theme="dark", border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
+class CustomComboBox(QComboBox):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Color Customization")
-        self.resize(475, 700)
-        self.theme = theme
-        self.current_colors = current_colors if current_colors else {}
-        self.border_radius = border_radius
-        self.border_size = border_size
-        self.checkbox_radius = checkbox_radius
-        self.scroll_radius = scroll_radius
-        self.scrollbar_width = scrollbar_width
-        self.color_pickers = {}
-        self.setup_ui()
 
-    def setup_ui(self):
-        main_layout = QVBoxLayout()
-        self.setLayout(main_layout)
-
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area_widget = QWidget()
-        scroll_area.setWidget(scroll_area_widget)
-        scroll_area_layout = QVBoxLayout(scroll_area_widget)
-
-        groups = [
-            ("General Colors", [
-                ("Text", "text_color"),
-                ("Background", "main_background"),
-                ("Label Background", "label_background"),
-                ("Search Background", "search_bar_background"),
-                ("Add Games Background", "add_games_background"),
-            ]),
-            ("Border Colors", [
-                ("Generic Border", "generic_border_color"),
-                ("Interactables Border", "interactables_border_color"),
-                ("Game List Border", "table_border_color"),
-            ]),
-            ("Game List", [
-                ("Gridline", "table_gridline_color"),
-                ("Background", "table_background"),
-                ("Selected Item", "table_item_selected"),
-            ]),
-            ("Scrollbar and Progress bar", [
-                ("Handle", "scrollbar_handle"),
-                ("Background", "scrollbar_background"),
-            ]),
-            ("Interactables", [
-                ("Button Hover", "button_hover"),
-                ("Button Pressed", "button_pressed"),
-                ("Button Background", "button_background"),
-                ("Checkbox Checked", "checkbox_background_checked"),
-                ("Checkbox Unchecked", "checkbox_background_unchecked"),
-                ("Category Background", "combobox_background"),
-                ("Category Dropdown Background", "combobox_dropdown_background"),
-            ]),
-        ]
-
-        for title, elements in groups:
-            group = QGroupBox()
-            self.setup_group(group, title, elements)
-            scroll_area_layout.addWidget(group)
-            scroll_area_layout.addSpacing(20)
-
-        self.setup_border_group()
-        scroll_area_layout.addWidget(self.border_group)
-
-        main_layout.addWidget(scroll_area)
-
-        apply_button = QPushButton("Apply and Save")
-        apply_button.clicked.connect(self.apply_colors)
-        main_layout.addWidget(apply_button)
-
-    def setup_group(self, group, title, elements):
-        # Create a vertical layout for the group
-        layout = QVBoxLayout()
-        group.setLayout(layout)
-
-        # Add the title as a label inside the box
-        title_label = QLabel(title)
-        title_label.setObjectName("DeepTitle")
-        title_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title_label)
-        layout.addSpacing(5)
-
-        # Add the elements below the title
-        form_layout = QFormLayout()
-        for label, key in elements:
-            self.add_color_picker(form_layout, label, key)
-        layout.addLayout(form_layout)
-
-    def add_color_picker(self, layout, label, key):
-        color_name = self.current_colors.get(key, "")
-        button = QPushButton(color_name or "Default")
-        button.setFixedSize(150, BUTTON_HEIGHT)
-        button.clicked.connect(lambda checked, btn=button, k=key: self.choose_color(btn, k))
-        reset_button = QPushButton("X")
-        reset_button.setObjectName("resetButton")
-        reset_button.setFixedSize(BUTTON_HEIGHT + 2, BUTTON_HEIGHT)
-        reset_button.clicked.connect(lambda checked, btn=button, k=key: self.reset_color(btn, k))
-        
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(0)
-        button_layout.addStretch()
-        button_layout.addWidget(button)
-        button_layout.addWidget(reset_button)
-        layout.addRow(label, button_layout)
-        self.color_pickers[key] = button
-        button.setStyleSheet(f""" QPushButton {{{ COLOR_PICKER_BUTTON_STYLE }}} """)
-        reset_button.setStyleSheet(f""" QPushButton {{{ COLOR_RESET_BUTTON_STYLE }}} """)
-
-        if color_name:
-            self.set_button_color(button, color_name)
-        else:
-            self.update_default_button_style(button)
-
-    def setup_border_group(self):
-        self.border_group = QGroupBox()
-        layout = QVBoxLayout()
-
-        # Add the title as a label inside the box
-        border_group = QLabel("Border Size and Radius")
-        border_group.setObjectName("DeepTitle")
-        border_group.setAlignment(Qt.AlignCenter)
-        layout.addWidget(border_group)
-        layout.addSpacing(5)
-        self.border_group.setLayout(layout)
-
-        sliders = [
-            ("Border Radius", "border_radius", 0, 13, self.update_border_radius, DEFAULT_BR),
-            ("Border Size", "border_size", 0, 3, self.update_border_size, DEFAULT_BS),
-            ("Checkbox Radius", "checkbox_radius", 0, 7, self.update_checkbox_radius, DEFAULT_CR),
-            ("Scrollbar Width", "scrollbar_width", 8, 14, self.update_scrollbar_width, DEFAULT_SW),
-            ("Scroll Radius", "scroll_radius", 0, self.scrollbar_width // 2, self.update_scroll_radius, DEFAULT_SR)
-        ]
-
-        [self.add_slider_row(layout, label, key, min_val, max_val, update_func, default_val) for label, key, min_val, max_val, update_func, default_val in sliders]
-
-    def add_slider_row(self, layout, label, key, min_val, max_val, update_func, default_val):
-        label_widget = QLabel(label)
-        slider = QSlider(Qt.Horizontal)
-        slider.setMinimum(min_val)
-        slider.setMaximum(max_val)
-        slider.setValue(getattr(self, key))
-        slider.valueChanged.connect(update_func)
-        value_label = QLabel(str(getattr(self, key)))
-        reset_button = QPushButton("X")
-        reset_button.setObjectName("resetButton")
-        reset_button.setFixedSize(BUTTON_HEIGHT + 2, BUTTON_HEIGHT)
-        reset_button.clicked.connect(lambda checked, s=slider, d=default_val, v=value_label: self.reset_slider(s, d, v))
-        slider_layout = QHBoxLayout()
-        slider_layout.addWidget(label_widget)
-        slider_layout.addWidget(slider)
-        slider_layout.addWidget(value_label)
-        slider_layout.addWidget(reset_button)
-        layout.addLayout(slider_layout)
-        setattr(self, f"{key}_slider", slider)
-        setattr(self, f"{key}_value_label", value_label)
-
-    def choose_color(self, button, key):
-        color = QColorDialog.getColor(QColor(button.text()), self, f"Choose {key} Color")
-        if color.isValid():
-            color_name = color.name()
-            button.setText(color_name)
-            self.set_button_color(button, color_name)
-            self.current_colors[key] = color_name
-            self.update_preview()
-        else:
-            button.setText("Default")
-            self.update_default_button_style(button)
-            self.current_colors.pop(key, None)
-            self.update_preview()
-
-    def set_button_color(self, button, color_name):
-        button.setStyleSheet(f"background-color: {color_name}; color: {self.contrast_color(color_name)}; {COLOR_PICKER_BUTTON_STYLE};")
-
-    def update_default_button_style(self, button):
-        text_color = "black" if self.theme == "light" else "white"
-        button.setStyleSheet(f"color: {text_color}; {COLOR_PICKER_BUTTON_STYLE};")
-
-    def contrast_color(self, hex_color):
-        r, g, b = int(hex_color[1:3], 16), int(hex_color[3:5], 16), int(hex_color[5:7], 16)
-        luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-        return "#000000" if luminance > 0.5 else "#FFFFFF"
-
-    def apply_colors(self):
-        self.accept()
-
-    def update_preview(self):
-        self.parent().apply_custom_colors(self.current_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
-
-    def update_value(self, key, value, value_label):
-        setattr(self, key, value)
-        value_label.setText(f"{value}")
-        self.update_preview()
-
-    def update_border_radius(self, value):
-        self.update_value("border_radius", value, self.border_radius_value_label)
-
-    def update_border_size(self, value):
-        self.update_value("border_size", value, self.border_size_value_label)
-
-    def update_checkbox_radius(self, value):
-        self.update_value("checkbox_radius", value, self.checkbox_radius_value_label)
-
-    def update_scrollbar_width(self, value):
-        max_radius = value // 2
-        self.scroll_radius_slider.setMaximum(max_radius)
-        if self.scroll_radius > max_radius:
-            self.update_value("scroll_radius", max_radius, self.scroll_radius_value_label)
-        else:
-            self.update_value("scrollbar_width", value, self.scrollbar_width_value_label)
-
-    def update_scroll_radius(self, value):
-        self.update_value("scroll_radius", value, self.scroll_radius_value_label)
-
-    def reset_color(self, button, key):
-        button.setText("Default")
-        self.update_default_button_style(button)
-        self.current_colors.pop(key, None)
-        self.update_preview()
-
-    def reset_slider(self, slider, default_val, value_label):
-        slider.setValue(default_val)
-        value_label.setText(str(default_val))
-        self.update_preview()
+    def wheelEvent(self, event):
+        event.ignore()
 
 class EditGameDialog(QDialog):
     def __init__(self, parent=None, games=None):
@@ -268,21 +47,18 @@ class EditGameDialog(QDialog):
         self.group_boxes = []
 
         for idx, game in enumerate(self.games):
-            group_box = QGroupBox(f"Game {idx + 1}")
+            group_box = QGroupBox()
             form_layout = QFormLayout()
 
             title_edit = QLineEdit(game["title"])
-            title_edit.setFixedHeight(BUTTON_HEIGHT)
             form_layout.addRow("Title:", title_edit)
 
             key_edit = QLineEdit(game["key"])
-            key_edit.setFixedHeight(BUTTON_HEIGHT)
             form_layout.addRow("Key:", key_edit)
 
-            category_combo = QComboBox()
+            category_combo = CustomComboBox()
             category_combo.addItems(["Premium", "Good", "Low Effort", "Bad", "VR", "Used", "New"])
             category_combo.setCurrentText(game["category"])
-            category_combo.setFixedHeight(BUTTON_HEIGHT)
             form_layout.addRow("Category:", category_combo)
 
             group_box.setLayout(form_layout)
@@ -310,167 +86,9 @@ class EditGameDialog(QDialog):
             self.games[idx]["category"] = category_combo.currentText()
         self.accept()
 
-class UpdateDialog(QDialog):
-    def __init__(self, parent=None, current_version=CURRENT_BUILD):
-        super().__init__(parent)
-        self.setWindowTitle("Update Manager")
-        self.resize(400, 200)
-        self.current_version = current_version
-        self.latest_version = None
-        self.setup_ui()
-
-    def setup_ui(self):
-        main_layout = QVBoxLayout()
-
-        # Module 1: Version and Branch Selection
-        version_group = QGroupBox()
-        version_layout = QVBoxLayout()
-        version_label = QLabel(f"Current Version: <b>{self.current_version}</b>")
-        version_layout.addWidget(version_label)
-
-        branch_layout = QHBoxLayout()
-        branch_label = QLabel("Selected Branch:")
-        self.branch_combo = QComboBox()
-        self.branch_combo.addItems(["Beta"]) 
-        self.branch_combo.setCurrentText("Beta")
-        self.branch_combo.setFixedSize(80, BUTTON_HEIGHT)
-        branch_layout.addWidget(branch_label)
-        branch_layout.addWidget(self.branch_combo)
-        version_layout.addLayout(branch_layout)
-        version_group.setLayout(version_layout)
-        main_layout.addWidget(version_group)
-
-        # Module 2: Check for Updates
-        check_update_group = QGroupBox()
-        check_update_layout = QVBoxLayout()
-
-        self.check_updates_button = QPushButton("Search")
-        self.check_updates_button.setFixedSize(65, BUTTON_HEIGHT)
-        self.check_updates_button.clicked.connect(self.check_updates)
-
-        self.update_available_layout = QVBoxLayout()
-        self.update_available_layout.setAlignment(Qt.AlignCenter)
-        self.update_available_layout.setSpacing(10)
-
-        self.update_label = QLabel("Check for Available Updates")
-        self.update_label.setAlignment(Qt.AlignCenter)
-        self.update_available_layout.addWidget(self.update_label)
-
-        self.download_button = QPushButton("Download and Install")
-        self.download_button.setFixedSize(160, BUTTON_HEIGHT)
-        self.download_button.clicked.connect(self.download_update)
-        self.download_button.setVisible(False)
-
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.check_updates_button)
-        button_layout.addWidget(self.download_button)
-        self.update_available_layout.addLayout(button_layout)
-
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
-        self.update_available_layout.addWidget(self.progress_bar)
-        check_update_layout.addLayout(self.update_available_layout)
-        check_update_group.setLayout(check_update_layout)
-        main_layout.addWidget(check_update_group)
-
-        # Temporary Progress Bar for Testing
-        temp_progress_bar = QProgressBar()
-        temp_progress_bar.setRange(0, 100)
-        temp_progress_bar.setValue(35) # Virtual Progress
-        temp_progress_bar.setVisible(False) # Set to True for testing
-        self.update_available_layout.addWidget(temp_progress_bar)
-
-        # Module 3: Changelog
-        changelog_group = QGroupBox()
-        changelog_layout = QVBoxLayout()
-        changelog_label = QLabel("Changelog:")
-        self.changelog_text = QTextEdit()
-        self.changelog_text.setReadOnly(True)
-        self.changelog_text.setFixedHeight(200)
-        changelog_layout.addWidget(changelog_label)
-        changelog_layout.addWidget(self.changelog_text)
-        changelog_group.setLayout(changelog_layout)
-        main_layout.addWidget(changelog_group)
-
-        # Created By Label
-        created_by_label = QLabel("SteamKM by Stick-bon")
-        created_by_label.setAlignment(Qt.AlignRight)
-        main_layout.addWidget(created_by_label, alignment=Qt.AlignRight)
-
-        self.setLayout(main_layout)
-
-    def check_updates(self):
-        branch = self.branch_combo.currentText()
-        self.latest_version = check_for_updates(silent=True)
-        if self.latest_version is None:
-            self.update_label.setText("Failed to check for updates. Please try again later.")
-        elif self.latest_version == self.current_version:
-            self.update_label.setText("You're already on the latest build")
-        else:
-            self.update_label.setText(f"New Version: <b>{self.latest_version}</b>")
-            self.download_button.setText("Download and Install")
-            self.download_button.setVisible(True)
-            self.fetch_changelog(branch)
-
-    def fetch_changelog(self, branch):
-        try:
-            response = requests.get(f"https://raw.githubusercontent.com/AbelSniffel/SteamKM/{branch}/CHANGELOG.md")
-            if response.status_code == 200:
-                self.changelog_text.setPlainText(response.text)
-            else:
-                self.changelog_text.setPlainText("Failed to fetch changelog.")
-        except Exception as e:
-            self.changelog_text.setPlainText(f"Failed to fetch changelog: {str(e)}")
-
-    def download_update(self):
-        if self.latest_version:
-            self.download_button.setVisible(False)
-            self.progress_bar.setVisible(True)
-            self.progress_bar.setRange(0, 0)  # Indeterminate progress initially
-
-            # Create a worker thread for downloading
-            self.download_thread = DownloadThread(self.latest_version)
-            self.download_thread.progress_signal.connect(self.update_progress)
-            self.download_thread.finished_signal.connect(self.download_finished)
-            self.download_thread.error_signal.connect(self.download_error)
-            self.download_thread.start()
-        else:
-            QMessageBox.warning(self, "Update Error", "No update available to download.")
-
-    def update_progress(self, downloaded, total):
-        if total > 0:
-            self.progress_bar.setRange(0, total)
-            self.progress_bar.setValue(downloaded)
-
-    def download_finished(self, success):
-        self.progress_bar.setVisible(False)
-        if success:
-            QMessageBox.information(self, "Download Complete", f"Update {self.latest_version} downloaded successfully. Please restart the program")
-        else:
-            QMessageBox.warning(self, "Download Failed", f"Failed to download update {self.latest_version}.")
-
-    def download_error(self, error_message):
-        self.progress_bar.setVisible(False)
-        QMessageBox.critical(self, "Download Error", error_message)
-
-class DownloadThread(QThread):
-    progress_signal = Signal(int, int)  # (downloaded, total)
-    finished_signal = Signal(bool)  # (success)
-    error_signal = Signal(str)  # (error_message)
-
-    def __init__(self, latest_version, parent=None):
-        super().__init__(parent)
-        self.latest_version = latest_version
-
-    def run(self):
-        try:
-            success = download_update(self.latest_version, self.update_progress)
-            self.finished_signal.emit(success)
-        except Exception as e:
-            self.error_signal.emit(str(e))
-
-    def update_progress(self, downloaded, total):
-        self.progress_signal.emit(downloaded, total)
+class PlainTextEdit(QTextEdit): # This removes the rich text support, downside being a miniscule amount of delay after each keypress
+    def insertFromMimeData(self, source):
+        self.insertPlainText(source.text())
 
 class SteamKeyManager(QMainWindow):
     def __init__(self):
@@ -502,6 +120,7 @@ class SteamKeyManager(QMainWindow):
         
         # Set up UI and Check for Updates
         self.setup_ui()
+        self.update_manager = UpdateManager(self, CURRENT_BUILD)
         
         # Apply initial theme
         if self.using_custom_colors:
@@ -529,14 +148,39 @@ class SteamKeyManager(QMainWindow):
         self.theme_switch.stateChanged.connect(self.toggle_default_theme)
         theme_layout.addWidget(self.theme_switch)
 
+        # Create a QDockWidget # Really cool thing so I'll use it in the future, disabled for now
+        #dock = QDockWidget("Temporary Dock", self)
+        #dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        
+        # Create a simple widget to place inside the dock
+        #dock_widget = QWidget()
+        #dock_layout = QVBoxLayout(dock_widget)
+        
+        # Add some widgets to the dock
+        #label = QLabel("This is a dock widget")
+        #dock_layout.addWidget(label)
+        
+        #dock.setWidget(dock_widget)
+        
+        # Add the dock to the main window
+        #self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+
         # Default/Custom Theme Toggle
         self.toggle_theme_checkbox = QCheckBox("Use Custom Colors")
         self.toggle_theme_checkbox.setChecked(self.using_custom_colors)
         self.toggle_theme_checkbox.stateChanged.connect(self.toggle_custom_theme)
         theme_layout.addWidget(self.toggle_theme_checkbox)
+        theme_layout.addSpacerItem(spacer)
+
+        # Update Available Label
+        self.update_available_label = QLabel("Update Available")
+        self.update_available_label.setObjectName("update_available_label")
+        self.update_available_label.setFixedWidth(95)
+        self.update_available_label.setVisible(False)
+        theme_layout.addWidget(self.update_available_label)
 
         # Buttons
-        self.update_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_update_dialog, 
+        self.update_menu_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_update_dialog, 
             icon=os.path.join(self.icons_dir, "update.svg"))
         self.color_config_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_color_config_dialog, 
             icon=os.path.join(self.icons_dir, "customization.svg"))
@@ -547,8 +191,7 @@ class SteamKeyManager(QMainWindow):
         self.copy_button = self.create_button("Copy Selected Keys", BUTTON_HEIGHT, self.copy_selected_keys)
         self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected_games)
 
-        theme_layout.addSpacerItem(spacer)
-        theme_layout.addWidget(self.update_button)
+        theme_layout.addWidget(self.update_menu_button)
         theme_layout.addWidget(self.color_config_button)
         theme_layout.addWidget(self.hamburger_menu_button)
         add_button_layout.addWidget(self.add_button)
@@ -557,7 +200,7 @@ class SteamKeyManager(QMainWindow):
         button_layout.addWidget(self.remove_button)
         
         # Add Games Input Box
-        self.input_text = QTextEdit()
+        self.input_text = PlainTextEdit()
         self.input_text.setPlaceholderText("Enter games (one per line, format: Title XXXXX-XXXXX-XXXXX)")
         self.input_text.setLineWrapMode(QTextEdit.NoWrap)
         self.input_text.setFixedHeight(75)
@@ -567,14 +210,12 @@ class SteamKeyManager(QMainWindow):
         # Search Bar
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search by title or key")
-        self.search_bar.setFixedHeight(BUTTON_HEIGHT)
         self.search_bar.textChanged.connect(self.refresh_game_list)
         search_layout.addWidget(self.search_bar)
 
         # Add category filter drop-down
         self.category_filter = QComboBox()
-        self.category_filter.setFixedHeight(BUTTON_HEIGHT)
-        self.category_filter.setFixedWidth(120)
+        self.category_filter.setFixedWidth(105)
         self.category_filter.addItem("All Categories")
         self.category_filter.addItems(self.categories)
         self.category_filter.currentTextChanged.connect(self.refresh_game_list)
@@ -583,7 +224,6 @@ class SteamKeyManager(QMainWindow):
         # Found Games Count label
         self.found_count_label = QLabel("Found Games: 0")
         self.found_count_label.setObjectName("FoundCountLabel")
-        self.found_count_label.setFixedHeight(BUTTON_HEIGHT)
         search_layout.addWidget(self.found_count_label)
 
         # Game list section
@@ -622,18 +262,18 @@ class SteamKeyManager(QMainWindow):
     def open_update_dialog(self):
         dialog = UpdateDialog(self, CURRENT_BUILD)
         dialog.exec()
-    
+
     def create_button(self, text, height, slot, icon=None, fixed_width=None):
+        icon_map = {
+            os.path.join(self.icons_dir, "update.svg"): UPDATE_ICON,
+            os.path.join(self.icons_dir, "menu.svg"): MENU_ICON,
+            os.path.join(self.icons_dir, "customization.svg"): CUSTOMIZATION_ICON
+        }
+        
         button = QPushButton(text)
         button.setFixedHeight(height)
         if icon:
-            # Use the hardcoded icons
-            if icon == os.path.join(self.icons_dir, "update.svg"):
-                button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(UPDATE_ICON.encode()))))
-            elif icon == os.path.join(self.icons_dir, "menu.svg"):
-                button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(MENU_ICON.encode()))))
-            elif icon == os.path.join(self.icons_dir, "customization.svg"):
-                button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(CUSTOMIZATION_ICON.encode()))))
+            button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(icon_map[icon].encode()))))
         if fixed_width:
             button.setFixedWidth(fixed_width)
         button.clicked.connect(slot)
