@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Qt
+from SteamKM_Icons import DOWN_ARROW_ICON
 
 BUTTON_HEIGHT = 33
 DEFAULT_BR = 6  # Border Radius
@@ -11,8 +12,104 @@ DEFAULT_BS = 0  # Border Size
 DEFAULT_CR = 4  # Checkbox Radius
 DEFAULT_SR = 3  # Scrollbar Radius
 DEFAULT_SW = 14 # Scrollbar Width
+PADDING = "5"
+DEFAULT_PADDING = "padding: 0px 12px;"
 COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-radius: 0px; border-right: 0px;"
 COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-left: 0px;"
+
+class Theme:
+    def __init__(self, theme="dark", custom_colors=None, border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
+        self.theme = theme
+        self.border_radius = border_radius
+        self.border_size = border_size
+        self.checkbox_radius = checkbox_radius
+        self.scroll_radius = scroll_radius
+        self.scrollbar_width = scrollbar_width
+        self.colors = self.get_theme_colors(theme)
+        if custom_colors:
+            self.colors.update(custom_colors)
+
+    def get_theme_colors(self, theme):
+        # Index 0: dark theme, Index 1: light theme
+        colors = {
+            "main_background": ("#2e2e2e", "#FFFFFF"),
+            "text_color": ("white", "black"),
+            "add_games_background": ("#404040", "#e6eefa"),
+            "search_bar_background": ("#404040", "#e6eefa"),
+            "label_background": ("#404040", "#e6eefa"),
+            "scrollbar_background": ("#424f47", "#c7e0f8"),
+            "scrollbar_handle": ("#62a88e", "#9bc3ff"),
+            "button_background": ("#525252", "#d6e8ff"),
+            "button_hover": ("#689484", "#adcbfb"),
+            "button_pressed": ("#62a88e", "#9bc3ff"),
+            "reset_button_background": ("#ff6666", "#ff9999"),
+            "reset_button_hover": ("#ff9999", "#ff6666"),
+            "reset_button_pressed": ("#ff4d4d", "#eb4646"),
+            "checkbox_background_unchecked": ("#444444", "#dadfe6"),
+            "checkbox_background_checked": ("#62a88e", "#91baff"),
+            "table_background": ("#2e2e2e", "#FFFFFF"),
+            "table_border_color": ("#4d4d4d", "#d9e3f2"),
+            "table_item_selected": ("#62a88e", "#a6c7ff"),
+            "table_gridline_color": ("#3d3d3d", "#e8e8e8"),
+            "header_background": ("#444444", "#d9d9d9"),
+            "combobox_background": ("#525252", "#d6e8ff"),
+            "combobox_dropdown_background": ("#444444", "#d9f8ff"),
+            "interactables_border_color": ("#404040", "#c1d6f5"),
+            "generic_border_color": ("#4d4d4d", "#d9e3f2"),
+        }
+        theme_index = 0 if theme == "dark" else 1
+        return {key: value[theme_index] for key, value in colors.items()}
+
+    def generate_stylesheet(self):
+        colors = self.colors
+        CHECKBOX_RADIUS = str(self.checkbox_radius)
+        BORDER_RADIUS = str(self.border_radius)
+        BORDER_SIZE = str(self.border_size)
+        MINIMUM_BORDER_SIZE = str(max(self.border_size, 2))
+        SCROLL_RADIUS = str(self.scroll_radius)
+        SCROLLBAR_WIDTH = str(self.scrollbar_width)
+
+        theme_stylesheet = f"""
+            QWidget {{ background-color: {colors['main_background']}; color: {colors['text_color']}; border-radius: {BORDER_RADIUS}px; }}
+            QLabel {{ background-color: transparent; color: {colors['text_color']}; border-radius: 0; }}
+            #FoundCountLabel {{ background-color: {colors['label_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; padding: {PADDING}px; }}
+            #DeepTitle {{ background-color: {colors['label_background']}; padding: 6px; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; height: {BUTTON_HEIGHT}; padding: {PADDING}px 12px; }}
+            QTextEdit {{ background-color: {colors['add_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding-left: 5px; padding-top: 4px; height: {BUTTON_HEIGHT}; }}
+            QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding-left: 7px; height: {BUTTON_HEIGHT}; }}
+            QGroupBox {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; margin-right: 5px; }}
+            QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; {DEFAULT_PADDING}; height: {BUTTON_HEIGHT}; }}
+            QComboBox:item:selected {{ background-color: {colors['table_item_selected']}; {DEFAULT_PADDING}; }}
+            QComboBox:drop-down {{ height: 0; width: 0; }}
+            QComboBox QAbstractItemView {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
+            QPushButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; {DEFAULT_PADDING}; height: {BUTTON_HEIGHT}; }}
+            QPushButton:hover, QComboBox:hover {{ background-color: {colors['button_hover']}; }}
+            QPushButton:pressed {{ background-color: {colors['button_pressed']}; }}
+            QPushButton#resetButton {{ background-color: {colors['reset_button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
+            QPushButton#resetButton:hover {{ background-color: {colors['reset_button_hover']}; }}
+            QPushButton#resetButton:pressed {{ background-color: {colors['reset_button_pressed']}; }}
+            QCheckBox::indicator:unchecked {{ background-color: {colors['checkbox_background_unchecked']}; height: 18; width: 18; border: 0px; border-radius: {CHECKBOX_RADIUS}px; }}
+            QCheckBox::indicator:checked {{ background-color: {colors['checkbox_background_checked']}; height: 18; width: 18; border: 0px; border-radius: {CHECKBOX_RADIUS}px; }}
+            QHeaderView {{ background-color: {colors['table_background']}; border: none; gridline-color: {colors['table_gridline_color']}; }}
+            QHeaderView::section {{ background-color: {colors['table_background']}; }}
+            QTableCornerButton::section {{ background-color: {colors['table_background']}; }}
+            QTableWidget {{ background-color: {colors['table_background']}; border: {MINIMUM_BORDER_SIZE}px solid {colors['table_border_color']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
+            QTableWidget::item {{ background-color: transparent; }}
+            QTableWidget::item:selected {{ background-color: {colors['table_item_selected']}; }}
+            QScrollBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; }}
+            QScrollBar:vertical {{ width: {SCROLLBAR_WIDTH}px; }}
+            QScrollBar:horizontal {{ height: {SCROLLBAR_WIDTH}px; }}
+            QScrollBar::handle {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px }}
+            QScrollBar::add-page, QScrollBar::sub-page {{ background-color: none; }}
+            QScrollBar::add-line, QScrollBar::sub-line {{ width: 0px; height: 0px; }}
+            QProgressBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; text-align: center; height: 6px }}
+            QProgressBar::chunk {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px }}
+            QMenu {{ background-color: {colors['main_background']}; padding: {PADDING}px; border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
+            QMenu::item {{ padding: {PADDING}px 15px; border-radius: 4px; }}
+            QMenu::item:selected {{ background-color: {colors['button_hover']}; }}
+            QMenu::item:pressed {{ background-color: {colors['button_pressed']}; }}
+        """
+        
+        return theme_stylesheet
 
 class ColorConfigDialog(QDialog):
     def __init__(self, parent=None, current_colors=None, theme="dark", border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
@@ -139,13 +236,13 @@ class ColorConfigDialog(QDialog):
         border_group.setObjectName("DeepTitle")
         border_group.setAlignment(Qt.AlignCenter)
         layout.addWidget(border_group)
-        layout.addSpacing(5)
+        layout.addSpacing(4)
         self.border_group.setLayout(layout)
 
         sliders = [
             ("Border Radius", "border_radius", 0, 13, self.update_border_radius, DEFAULT_BR),
             ("Border Size", "border_size", 0, 3, self.update_border_size, DEFAULT_BS),
-            ("Checkbox Radius", "checkbox_radius", 0, 7, self.update_checkbox_radius, DEFAULT_CR),
+            ("Checkbox Radius", "checkbox_radius", 0, 9, self.update_checkbox_radius, DEFAULT_CR),
             ("Scrollbar Width", "scrollbar_width", 8, 14, self.update_scrollbar_width, DEFAULT_SW),
             ("Scroll Radius", "scroll_radius", 0, self.scrollbar_width // 2, self.update_scroll_radius, DEFAULT_SR)
         ]
@@ -240,98 +337,3 @@ class ColorConfigDialog(QDialog):
         slider.setValue(default_val)
         value_label.setText(str(default_val))
         self.update_preview()
-
-class Theme:
-    def __init__(self, theme="dark", custom_colors=None, border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
-        self.theme = theme
-        self.border_radius = border_radius
-        self.border_size = border_size
-        self.checkbox_radius = checkbox_radius
-        self.scroll_radius = scroll_radius
-        self.scrollbar_width = scrollbar_width
-        self.colors = self.get_theme_colors(theme)
-        if custom_colors:
-            self.colors.update(custom_colors)
-
-    def get_theme_colors(self, theme):
-        # Index 0: dark theme, Index 1: light theme
-        colors = {
-            "main_background": ("#2e2e2e", "#FFFFFF"),
-            "text_color": ("white", "black"),
-            "add_games_background": ("#404040", "#e6eefa"),
-            "search_bar_background": ("#404040", "#e6eefa"),
-            "label_background": ("#404040", "#e6eefa"),
-            "scrollbar_background": ("#404040", "#e1e9f2"),
-            "scrollbar_handle": ("#62a88e", "#a6c7ff"),
-            "button_background": ("#525252", "#d6e8ff"),
-            "button_hover": ("#748a81", "#bdd5fc"),
-            "button_pressed": ("#71a892", "#a6c7ff"),
-            "reset_button_background": ("#ff6666", "#ff9999"),
-            "reset_button_hover": ("#ff9999", "#ff6666"),
-            "reset_button_pressed": ("#ff4d4d", "#eb4646"),
-            "checkbox_background_unchecked": ("#444444", "#dadfe6"),
-            "checkbox_background_checked": ("#62a88e", "#91baff"),
-            "table_background": ("#2e2e2e", "#FFFFFF"),
-            "table_border_color": ("#4d4d4d", "#d9e3f2"),
-            "table_item_selected": ("#62a88e", "#a6c7ff"),
-            "table_gridline_color": ("#3d3d3d", "#e8e8e8"),
-            "header_background": ("#444444", "#d9d9d9"),
-            "combobox_background": ("#525252", "#d6e8ff"),
-            "combobox_dropdown_background": ("#444444", "#d9f8ff"),
-            "interactables_border_color": ("#404040", "#d9e3f2"),
-            "generic_border_color": ("#4d4d4d", "#d9e3f2"),
-        }
-        theme_index = 0 if theme == "dark" else 1
-        return {key: value[theme_index] for key, value in colors.items()}
-
-    def generate_stylesheet(self):
-        colors = self.colors
-        CHECKBOX_RADIUS = str(self.checkbox_radius)
-        BORDER_RADIUS = str(self.border_radius)
-        BORDER_SIZE = str(self.border_size)
-        MINIMUM_BORDER_SIZE = str(max(self.border_size, 2))
-        SCROLL_RADIUS = str(self.scroll_radius)
-        SCROLLBAR_WIDTH = str(self.scrollbar_width)
-        PADDING = "5"
-
-        theme_stylesheet = f"""
-            QWidget {{ background-color: {colors['main_background']}; color: {colors['text_color']}; border-radius: {BORDER_RADIUS}px }}
-            #FoundCountLabel {{ background-color: {colors['label_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
-            #DeepTitle {{ background-color: {colors['label_background']}; padding: 6px; }}
-            QTextEdit {{ background-color: {colors['add_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
-            QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding: {PADDING}px; }}
-            QGroupBox {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; margin-right: 5px;}}
-            QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding-left: 10px }}
-            QComboBox:item:selected {{ background-color: {colors['table_item_selected']}; padding: 0 2px; }}
-            QComboBox QAbstractItemView {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
-            QComboBox::drop-down {{ height: 0; }}
-            QPushButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding: {PADDING}px 10px; }}
-            QPushButton:hover, QComboBox:hover {{ background-color: {colors['button_hover']}; }}
-            QPushButton:pressed {{ background-color: {colors['button_pressed']}; }}
-            QPushButton#resetButton {{ background-color: {colors['reset_button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; padding: {PADDING}px 10px; }}
-            QPushButton#resetButton:hover {{ background-color: {colors['reset_button_hover']}; }}
-            QPushButton#resetButton:pressed {{ background-color: {colors['reset_button_pressed']}; }}
-            QCheckBox::indicator:unchecked {{ background-color: {colors['checkbox_background_unchecked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
-            QCheckBox::indicator:checked {{ background-color: {colors['checkbox_background_checked']}; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
-            QCheckBox::indicator:disabled {{ background-color: #ff4d4d; border: 0px solid; border-radius: {CHECKBOX_RADIUS}px; }}
-            QHeaderView {{ background-color: {colors['table_background']}; border: none; gridline-color: {colors['table_gridline_color']}; }}
-            QHeaderView::section {{ background-color: {colors['table_background']}; }}
-            QTableCornerButton::section {{ background-color: {colors['table_background']}; }}
-            QTableWidget {{ background-color: {colors['table_background']}; border: {MINIMUM_BORDER_SIZE}px solid {colors['table_border_color']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
-            QTableWidget::item {{ background-color: transparent; }}
-            QTableWidget::item:selected {{ background-color: {colors['table_item_selected']}; }}
-            QScrollBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; }}
-            QScrollBar:vertical {{ width: {SCROLLBAR_WIDTH}px; }}
-            QScrollBar:horizontal {{ height: {SCROLLBAR_WIDTH}px; }}
-            QScrollBar::handle {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px }}
-            QScrollBar::add-page, QScrollBar::sub-page {{ background-color: none; }}
-            QScrollBar::add-line, QScrollBar::sub-line {{ width: 0px; height: 0px; }}
-            QProgressBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; text-align: center; height: 6px }}
-            QProgressBar::chunk {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px }}
-            QMenu {{ background-color: {colors['main_background']}; padding: {PADDING}px; border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
-            QMenu::item {{ padding: {PADDING}px 15px; border-radius: 4px; }}
-            QMenu::item:selected {{ background-color: {colors['button_hover']}; }}
-            QMenu::item:pressed {{ background-color: {colors['button_pressed']}; }}
-        """
-        
-        return theme_stylesheet

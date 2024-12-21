@@ -10,14 +10,21 @@ from pathlib import Path
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QTextEdit, QTableWidget, 
     QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit, QFileDialog, QComboBox, QDialog, QFormLayout, 
-    QGroupBox, QScrollArea, QSpacerItem, QSizePolicy
+    QGroupBox, QScrollArea, QSpacerItem, QSizePolicy, QDockWidget
 )
 from PySide6.QtGui import QAction, QIcon, QPixmap, QImage
 from PySide6.QtCore import Qt, QPoint, QTimer, QThread, Signal
 from SteamKM_Version import CURRENT_BUILD
-from SteamKM_Updater import UpdateDialog, UpdateManager
+from SteamKM_Updater import UpdateDialog, UpdateManager, show_update_message_if_needed
 from SteamKM_Themes import ColorConfigDialog, Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT
 from SteamKM_Icons import UPDATE_ICON, MENU_ICON, CUSTOMIZATION_ICON
+
+class CustomComboBox(QComboBox):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def wheelEvent(self, event):
+        event.ignore()
 
 class EditGameDialog(QDialog):
     def __init__(self, parent=None, games=None):
@@ -44,17 +51,14 @@ class EditGameDialog(QDialog):
             form_layout = QFormLayout()
 
             title_edit = QLineEdit(game["title"])
-            title_edit.setFixedHeight(BUTTON_HEIGHT)
             form_layout.addRow("Title:", title_edit)
 
             key_edit = QLineEdit(game["key"])
-            key_edit.setFixedHeight(BUTTON_HEIGHT)
             form_layout.addRow("Key:", key_edit)
 
-            category_combo = QComboBox()
+            category_combo = CustomComboBox()
             category_combo.addItems(["Premium", "Good", "Low Effort", "Bad", "VR", "Used", "New"])
             category_combo.setCurrentText(game["category"])
-            category_combo.setFixedHeight(BUTTON_HEIGHT)
             form_layout.addRow("Category:", category_combo)
 
             group_box.setLayout(form_layout)
@@ -117,6 +121,9 @@ class SteamKeyManager(QMainWindow):
         # Set up UI and Check for Updates
         self.setup_ui()
         self.update_manager = UpdateManager(self, CURRENT_BUILD)
+
+        # Show update message if needed
+        show_update_message_if_needed()
         
         # Apply initial theme
         if self.using_custom_colors:
@@ -144,6 +151,23 @@ class SteamKeyManager(QMainWindow):
         self.theme_switch.stateChanged.connect(self.toggle_default_theme)
         theme_layout.addWidget(self.theme_switch)
 
+        # Create a QDockWidget # Really cool thing so I'll use it in the future, disabled for now
+        #dock = QDockWidget("Temporary Dock", self)
+        #dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        
+        # Create a simple widget to place inside the dock
+        #dock_widget = QWidget()
+        #dock_layout = QVBoxLayout(dock_widget)
+        
+        # Add some widgets to the dock
+        #label = QLabel("This is a dock widget")
+        #dock_layout.addWidget(label)
+        
+        #dock.setWidget(dock_widget)
+        
+        # Add the dock to the main window
+        #self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+
         # Default/Custom Theme Toggle
         self.toggle_theme_checkbox = QCheckBox("Use Custom Colors")
         self.toggle_theme_checkbox.setChecked(self.using_custom_colors)
@@ -154,11 +178,12 @@ class SteamKeyManager(QMainWindow):
         # Update Available Label
         self.update_available_label = QLabel("Update Available")
         self.update_available_label.setObjectName("update_available_label")
+        self.update_available_label.setFixedWidth(95)
         self.update_available_label.setVisible(False)
         theme_layout.addWidget(self.update_available_label)
 
         # Buttons
-        self.update_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_update_dialog, 
+        self.update_menu_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_update_dialog, 
             icon=os.path.join(self.icons_dir, "update.svg"))
         self.color_config_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_color_config_dialog, 
             icon=os.path.join(self.icons_dir, "customization.svg"))
@@ -169,7 +194,7 @@ class SteamKeyManager(QMainWindow):
         self.copy_button = self.create_button("Copy Selected Keys", BUTTON_HEIGHT, self.copy_selected_keys)
         self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected_games)
 
-        theme_layout.addWidget(self.update_button)
+        theme_layout.addWidget(self.update_menu_button)
         theme_layout.addWidget(self.color_config_button)
         theme_layout.addWidget(self.hamburger_menu_button)
         add_button_layout.addWidget(self.add_button)
@@ -188,14 +213,12 @@ class SteamKeyManager(QMainWindow):
         # Search Bar
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search by title or key")
-        self.search_bar.setFixedHeight(BUTTON_HEIGHT)
         self.search_bar.textChanged.connect(self.refresh_game_list)
         search_layout.addWidget(self.search_bar)
 
         # Add category filter drop-down
         self.category_filter = QComboBox()
-        self.category_filter.setFixedHeight(BUTTON_HEIGHT)
-        self.category_filter.setFixedWidth(120)
+        self.category_filter.setFixedWidth(105)
         self.category_filter.addItem("All Categories")
         self.category_filter.addItems(self.categories)
         self.category_filter.currentTextChanged.connect(self.refresh_game_list)
@@ -204,7 +227,6 @@ class SteamKeyManager(QMainWindow):
         # Found Games Count label
         self.found_count_label = QLabel("Found Games: 0")
         self.found_count_label.setObjectName("FoundCountLabel")
-        self.found_count_label.setFixedHeight(BUTTON_HEIGHT)
         search_layout.addWidget(self.found_count_label)
 
         # Game list section
