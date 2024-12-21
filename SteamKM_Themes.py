@@ -74,8 +74,8 @@ class Theme:
             QLabel {{ background-color: transparent; color: {colors['text_color']}; border-radius: 0; }}
             #FoundCountLabel {{ background-color: {colors['label_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; padding: {PADDING}px; }}
             #DeepTitle {{ background-color: {colors['label_background']}; padding: 6px; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; height: {BUTTON_HEIGHT}; padding: {PADDING}px 12px; }}
-            QTextEdit {{ background-color: {colors['add_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; {DEFAULT_PADDING}; padding-top: 4px; height: {BUTTON_HEIGHT}; }}
-            QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; {DEFAULT_PADDING}; height: {BUTTON_HEIGHT}; }}
+            QTextEdit {{ background-color: {colors['add_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding-left: 5px; padding-top: 4px; height: {BUTTON_HEIGHT}; }}
+            QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding-left: 7px; height: {BUTTON_HEIGHT}; }}
             QGroupBox {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; margin-right: 5px; }}
             QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; {DEFAULT_PADDING}; height: {BUTTON_HEIGHT}; }}
             QComboBox:item:selected {{ background-color: {colors['table_item_selected']}; {DEFAULT_PADDING}; }}

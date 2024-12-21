@@ -12,3 +12,9 @@ MENU_ICON = '''<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo,
 CUSTOMIZATION_ICON = '''<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg fill="#000000" width="800px" height="800px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21,15V2a1,1,0,0,0-1-1H12a1,1,0,0,0-.929.629L10,4.308,8.929,1.629A1,1,0,0,0,8,1H4A1,1,0,0,0,3,2V15a2,2,0,0,0,2,2H9v3a3,3,0,0,0,3,3,3.054,3.054,0,0,0,3-3.107V17h4A2,2,0,0,0,21,15ZM5,3H7.323L9.071,7.371a1,1,0,0,0,1.858,0L12.677,3H19v8H5Zm9,12a1,1,0,0,0-1,1v3.893a1.083,1.083,0,0,1-.825,1.092A1,1,0,0,1,11,20V16a1,1,0,0,0-1-1H5V13H19v2Z"/></svg>
 '''
+
+DOWN_ARROW_ICON = '''<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg fill="#000000" width="800px" height="800px" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<path d="M78.466 35.559L50.15 63.633L22.078 35.317c-0.777-0.785-2.044-0.789-2.828-0.012s-0.789 2.044-0.012 2.827L48.432 67.58c0.365 0.368 0.835 0.563 1.312 0.589c0.139 0.008 0.278-0.001 0.415-0.021c0.054 0.008 0.106 0.021 0.16 0.022c0.544 0.029 1.099-0.162 1.515-0.576l29.447-29.196c0.785-0.777 0.79-2.043 0.012-2.828S79.249 34.781 78.466 35.559z"/>
+</svg>
+'''

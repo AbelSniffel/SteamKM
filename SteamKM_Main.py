@@ -10,12 +10,12 @@ from pathlib import Path
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QTextEdit, QTableWidget, 
     QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit, QFileDialog, QComboBox, QDialog, QFormLayout, 
-    QGroupBox, QScrollArea, QSpacerItem, QSizePolicy, QDockWidget, QToolBar
+    QGroupBox, QScrollArea, QSpacerItem, QSizePolicy, QDockWidget
 )
 from PySide6.QtGui import QAction, QIcon, QPixmap, QImage
 from PySide6.QtCore import Qt, QPoint, QTimer, QThread, Signal
 from SteamKM_Version import CURRENT_BUILD
-from SteamKM_Updater import UpdateDialog, UpdateManager
+from SteamKM_Updater import UpdateDialog, UpdateManager, show_update_message_if_needed
 from SteamKM_Themes import ColorConfigDialog, Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT
 from SteamKM_Icons import UPDATE_ICON, MENU_ICON, CUSTOMIZATION_ICON
 
@@ -121,6 +121,9 @@ class SteamKeyManager(QMainWindow):
         # Set up UI and Check for Updates
         self.setup_ui()
         self.update_manager = UpdateManager(self, CURRENT_BUILD)
+
+        # Show update message if needed
+        show_update_message_if_needed()
         
         # Apply initial theme
         if self.using_custom_colors:

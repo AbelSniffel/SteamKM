@@ -1,12 +1,14 @@
+# SteamKM_Updater.py
 from PySide6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QLabel, QComboBox, QPushButton, QProgressBar, QTextEdit, QApplication, QGroupBox, QHBoxLayout
 from PySide6.QtCore import Qt, QThread, Signal, QTimer
 from SteamKM_Version import CURRENT_BUILD
 from packaging.version import parse, InvalidVersion
+from time import time
 import requests
 import os
 import sys
 import logging
-from time import time
+import subprocess
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -25,7 +27,7 @@ def check_for_updates(branch="Beta"):
         latest_version = response.json().get("tag_name", "0.0.0")
         logging.debug(f"Latest version from GitHub: {latest_version}")
         return latest_version if parse(latest_version) > parse(CURRENT_BUILD) else CURRENT_BUILD
-    except (requests.exceptions.RequestException, InvalidVersion) as e:
+    except Exception as e:
         logging.error(f"Error checking for updates: {e}")
         QMessageBox.critical(None, "Update Error", str(e))
         return CURRENT_BUILD
@@ -42,33 +44,26 @@ def download_update(latest_version, progress_callback):
                 download_url = asset.get("browser_download_url")
                 script_path = os.path.realpath(sys.executable)
                 update_path = script_path + ".new"
-                file_size = int(asset.get("size", 0))
-                if file_size == 0:
+                file_size = asset.get("size", 0)
+                if not file_size:
                     raise Exception("Failed to get file size.")
                 progress_callback(0, file_size)
                 with open(update_path, 'wb') as f:
                     with requests.get(download_url, headers=headers, stream=True) as r:
                         r.raise_for_status()
-                        downloaded_size = 0
                         for chunk in r.iter_content(chunk_size=8192):
                             if chunk:
                                 f.write(chunk)
-                                downloaded_size += len(chunk)
-                                progress_callback(downloaded_size, file_size)
+                                progress_callback(r.raw.tell(), file_size)
                 backup_path = script_path + ".bak"
                 if os.path.exists(backup_path):
                     os.remove(backup_path)
                 os.rename(script_path, backup_path)
                 os.rename(update_path, script_path)
-                logging.info(f"Update to version {latest_version} successful.")
                 return True
-        logging.error(f"No matching asset found for version {latest_version}")
         raise Exception("No matching asset found for version {latest_version}")
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Failed to download update: {e}")
-        raise e
     except Exception as e:
-        logging.error(f"An error occurred: {e}")
+        logging.error(f"Failed to download update: {e}")
         raise e
 
 class UpdateManager:
@@ -93,7 +88,7 @@ class UpdateCheckThread(QThread):
     update_available = Signal(bool)
 
     def run(self):
-        available = check_for_updates() != CURRENT_BUILD
+        available = parse(check_for_updates()) > parse(CURRENT_BUILD)
         self.update_available.emit(available)
 
 class DownloadThread(QThread):
@@ -135,69 +130,58 @@ class UpdateDialog(QDialog):
     def setup_ui(self):
         main_layout = QVBoxLayout()
 
-        version_group = QGroupBox() # Module 1, Version Info
+        version_group = QGroupBox()
         version_layout = QVBoxLayout()
         version_label = QLabel(f"Current Version: <b>{self.current_version}</b>")
         version_layout.addWidget(version_label)
         version_group.setLayout(version_layout)
         main_layout.addWidget(version_group)
 
-        check_update_group = QGroupBox() # Module 2, Version Info
+        check_update_group = QGroupBox()
         check_update_layout = QVBoxLayout()
 
-        self.update_label = QLabel("Checking for updates...")
-        self.update_label.setAlignment(Qt.AlignCenter)
+        self.update_label = QLabel("Checking for updates...", alignment=Qt.AlignCenter)
         check_update_layout.addWidget(self.update_label)
 
         button_layout = QHBoxLayout()
 
-        self.check_updates_button = QPushButton("Check")
+        self.check_updates_button = QPushButton("Check", fixedWidth=75)
         self.check_updates_button.clicked.connect(self.fetch_releases)
-        self.check_updates_button.setFixedWidth(75)
         button_layout.addWidget(self.check_updates_button)
 
-        self.download_button = QPushButton("Download")
-        self.download_button.clicked.connect(self.download_update)
-        self.download_button.setVisible(False)
+        self.download_button = QPushButton("Download", visible=False)
+        self.download_button.clicked.connect(self.start_download)
         button_layout.addWidget(self.download_button)
         
-        self.version_combo = QComboBox()
+        self.version_combo = QComboBox(fixedWidth=122, visible=False)
         self.version_combo.currentIndexChanged.connect(self.on_version_selected)
-        self.version_combo.setFixedWidth(122)
-        self.version_combo.setVisible(False)
         button_layout.addWidget(self.version_combo)
 
-        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button = QPushButton("Cancel", fixedWidth=75, visible=False)
         self.cancel_button.clicked.connect(self.cancel_download)
-        self.cancel_button.setFixedWidth(75)
-        self.cancel_button.setVisible(False)
         button_layout.addWidget(self.cancel_button)
 
         check_update_layout.addLayout(button_layout)
 
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
+        self.progress_bar = QProgressBar(visible=False)
         check_update_layout.addWidget(self.progress_bar)
 
         check_update_group.setLayout(check_update_layout)
         main_layout.addWidget(check_update_group)
 
-        changelog_group = QGroupBox()  # Module 3, Change Log
+        changelog_group = QGroupBox()
         changelog_layout = QVBoxLayout()
 
-        changelog_label = QLabel("Changelog")
-        changelog_label.setAlignment(Qt.AlignLeft)
+        changelog_label = QLabel("Changelog", alignment=Qt.AlignLeft)
         changelog_layout.addWidget(changelog_label)
 
-        self.changelog_text = QTextEdit()
-        self.changelog_text.setReadOnly(True)
+        self.changelog_text = QTextEdit(readOnly=True)
         changelog_layout.addWidget(self.changelog_text)
         changelog_group.setLayout(changelog_layout)
         main_layout.addWidget(changelog_group)
 
-        created_by_label = QLabel("SteamKM by Stick-bon")
-        created_by_label.setAlignment(Qt.AlignRight)
-        main_layout.addWidget(created_by_label, alignment=Qt.AlignRight)
+        created_by_label = QLabel("SteamKM by Stick-bon", alignment=Qt.AlignRight)
+        main_layout.addWidget(created_by_label)
 
         self.setLayout(main_layout)
 
@@ -208,14 +192,26 @@ class UpdateDialog(QDialog):
             response.raise_for_status()
             releases = response.json()
             versions = [release["tag_name"] for release in releases]
+            latest_version = versions[0] if versions else None
+
             self.version_combo.clear()
+            local_version = parse(self.current_version)
             for version in versions:
-                self.version_combo.addItem(f"{version} (latest)" if version == versions[0] else version)
+                item_text = version
+                if version == latest_version and parse(version) > local_version:
+                    item_text = f"{version} (latest)"
+                self.version_combo.addItem(item_text)
+
             self.version_combo.setVisible(True)
-            self.update_label.setText("Select a version to download.")
             self.download_button.setVisible(True)
             self.fetch_changelog()
-        except requests.exceptions.RequestException as e:
+
+            if latest_version and local_version >= parse(latest_version):
+                self.update_label.setText("You're already on the latest build.")
+                self.version_combo.setFixedWidth(85)
+                return
+            self.update_label.setText("Select a version to download.")
+        except Exception as e:
             self.update_label.setText("Failed to check for updates. Please try again later.")
             logging.error(f"Error checking for updates: {e}")
 
@@ -228,12 +224,12 @@ class UpdateDialog(QDialog):
 
     def on_version_selected(self, index):
         selected_version = self.version_combo.itemText(index).replace("(latest)", "").strip()
-        if selected_version != self.current_version:
-            self.download_button.setEnabled(True)
-        else:
-            self.download_button.setEnabled(False)
+        self.download_button.setEnabled(selected_version != self.current_version)
 
-    def download_update(self):
+    def start_download(self):
+        if self.download_thread and self.download_thread.isRunning():
+            QMessageBox.warning(self, "Download in Progress", "A download is already in progress.")
+            return
         selected_version = self.version_combo.currentText().replace("(latest)", "").strip()
         if selected_version:
             self.latest_version = selected_version
@@ -266,22 +262,7 @@ class UpdateDialog(QDialog):
             self.download_button.setVisible(True)
         else:
             QMessageBox.warning(self, "Download Not Running", "No download is currently running.")
-
-    def update_progress(self, downloaded, total, estimated_time):
-        if total > 0:
-            self.progress_bar.setRange(0, total)
-            self.progress_bar.setValue(downloaded)
-            self.update_label.setText(f"Downloaded: {downloaded / (1024 * 1024):.2f} MB / {total / (1024 * 1024):.2f} MB\nEstimated Time: {int(estimated_time)} seconds" if estimated_time > 0 else f"Download Size: {downloaded / (1024 * 1024):.2f} MB / {total / (1024 * 1024):.2f} MB")
-
-    def download_finished(self, success):
-        self.progress_bar.setVisible(False)
-        self.cancel_button.setVisible(False)
-        self.download_button.setVisible(True)
-        if success:
-            QMessageBox.information(self, "Download Complete", f"Update {self.latest_version} downloaded successfully. Please restart the program.")
-        else:
-            QMessageBox.warning(self, "Download Failed", f"Failed to download update {self.latest_version}.")
-
+    
     def download_error(self, error_message):
         self.check_updates_button.setVisible(True)
         self.version_combo.setVisible(True)
@@ -290,3 +271,68 @@ class UpdateDialog(QDialog):
         self.download_button.setVisible(True)
         self.update_label.setText("Download Error")
         QMessageBox.critical(self, "Download Error", error_message)
+
+    def update_progress(self, downloaded, total, estimated_time):
+        self.progress_bar.setRange(0, total)
+        self.progress_bar.setValue(downloaded)
+        self.update_label.setText(f"Downloaded: {downloaded / (1024 * 1024):.2f} MB / {total / (1024 * 1024):.2f} MB\nEstimated Time: {int(estimated_time)} seconds" if estimated_time > 0 else f"Download Size: {downloaded / (1024 * 1024):.2f} MB / {total / (1024 * 1024):.2f} MB")
+
+    def download_finished(self, success):
+        if success:
+            self.progress_bar.setVisible(False)
+            self.cancel_button.setVisible(False)
+            self.download_button.setVisible(True)
+            
+            # Create a temporary script to handle the restart
+            restart_script = """
+    import os
+    import sys
+    import time
+
+    # Paths
+    new_executable = '{}'
+    old_executable = '{}'
+    backup_executable = '{}'
+    update_flag_file = '{}'
+
+    # Wait for the main application to close
+    time.sleep(2)
+
+    # Replace the old executable with the new one
+    os.remove(old_executable)
+    os.rename(new_executable, old_executable)
+
+    # Optionally, remove the backup file if it exists
+    if os.path.exists(backup_executable):
+        os.remove(backup_executable)
+
+    # Create a flag file to indicate the update message has been shown
+    with open(update_flag_file, 'w') as f:
+        f.write('1')
+
+    # Restart the application
+    os.execv(old_executable, ['python'] + sys.argv)
+    """.format(os.path.realpath(sys.executable) + ".new", os.path.realpath(sys.executable), os.path.realpath(sys.executable) + ".bak", os.path.realpath(sys.executable) + ".update_flag")
+
+            # Write the restart script to a temporary file
+            with open("restart_script.py", "w") as f:
+                f.write(restart_script)
+
+            # Run the restart script in a new process
+            subprocess.Popen([sys.executable, "restart_script.py"])
+            
+            # Exit the current application
+            QApplication.quit()
+        else:
+            msg_box = QMessageBox.warning
+            msg_box(self, "Download Failed", f"Update {self.latest_version} failed to download.")
+            self.download_thread.deleteLater()
+            self.download_thread = None
+
+def show_update_message_if_needed():
+    update_flag_file = os.path.realpath(sys.executable) + ".update_flag"
+    if os.path.exists(update_flag_file):
+        # Show the update message
+        QMessageBox.information(None, "Update Success", f"Successfully updated to version: {CURRENT_BUILD}")
+        # Remove the flag file after showing the message
+        os.remove(update_flag_file)
