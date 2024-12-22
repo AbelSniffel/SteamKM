@@ -15,9 +15,10 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QAction, QIcon, QPixmap, QImage
 from PySide6.QtCore import Qt, QPoint, QTimer, QThread, Signal
 from SteamKM_Version import CURRENT_BUILD
-from SteamKM_Updater import UpdateDialog, UpdateManager, show_update_message_if_needed
+from SteamKM_Updater import UpdateDialog, UpdateManager
 from SteamKM_Themes import ColorConfigDialog, Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT
 from SteamKM_Icons import UPDATE_ICON, MENU_ICON, CUSTOMIZATION_ICON
+from SteamKM_Config import load_config, save_config
 
 class CustomComboBox(QComboBox):
     def __init__(self, parent=None):
@@ -96,7 +97,6 @@ class SteamKeyManager(QMainWindow):
         self.setWindowTitle("Steam Key Manager V3 (Beta)")
         self.resize(860, 600)
         self.data_file = Path("steam_keys.json")
-        self.config_file = Path("manager_settings.json")
         self.script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
         self.icons_dir = os.path.join(self.script_dir, "SteamKM_Icons")
         
@@ -105,25 +105,23 @@ class SteamKeyManager(QMainWindow):
         self.games = {}
         self.visible_keys = set()
         self.show_keys = False
-        self.using_custom_colors = False
-        self.custom_colors = {}
-        self.theme = "dark"
-        self.border_radius = DEFAULT_BR
-        self.border_size = DEFAULT_BS
-        self.checkbox_radius = DEFAULT_CR
-        self.scrollbar_width = DEFAULT_SW
-        self.scroll_radius = DEFAULT_SR
+        self.config = load_config()
+        self.theme = self.config.get("theme", "dark")
+        self.show_update_message = self.config.get("show_update_message", False)
+        self.using_custom_colors = self.config.get("using_custom_colors", False)
+        self.custom_colors = self.config.get("custom_colors", {})
+        self.border_radius = self.config.get("border_radius", DEFAULT_BR)
+        self.border_size = self.config.get("border_size", DEFAULT_BS)
+        self.checkbox_radius = self.config.get("checkbox_radius", DEFAULT_CR)
+        self.scrollbar_width = self.config.get("scrollbar_width", DEFAULT_SW)
+        self.scroll_radius = self.config.get("scroll_radius", DEFAULT_SR)
         
         # Load data
         self.load_key_data()
-        self.load_config()
         
         # Set up UI and Check for Updates
         self.setup_ui()
         self.update_manager = UpdateManager(self, CURRENT_BUILD)
-
-        # Show update message if needed
-        show_update_message_if_needed()
         
         # Apply initial theme
         if self.using_custom_colors:
@@ -597,31 +595,10 @@ class SteamKeyManager(QMainWindow):
             shutil.copy(self.data_file, backup_file)
         self.data_file.write_text(json.dumps(self.games, indent=4))
 
-    def load_config(self):
-        if self.config_file.exists():
-            try:
-                config = json.loads(self.config_file.read_text())
-                self.theme = config.get("theme", "dark")
-                self.using_custom_colors = config.get("using_custom_colors", False)
-                self.custom_colors = config.get("custom_colors", {})
-                self.border_radius = config.get("border_radius", DEFAULT_BR)
-                self.border_size = config.get("border_size", DEFAULT_BS)
-                self.checkbox_radius = config.get("checkbox_radius", DEFAULT_CR)
-                self.scrollbar_width = config.get("scrollbar_width", DEFAULT_SW)
-                self.scroll_radius = config.get("scroll_radius", DEFAULT_SR)
-            except json.JSONDecodeError:
-                self.theme = "dark"
-                self.using_custom_colors = False
-                self.custom_colors = {}
-                self.border_radius = DEFAULT_BR
-                self.border_size = DEFAULT_BS
-                self.checkbox_radius = DEFAULT_CR
-                self.scrollbar_width = DEFAULT_SW
-                self.scroll_radius = DEFAULT_SR
-
     def save_config(self):
         config = {
             "theme": self.theme,
+            "show_update_message": self.show_update_message,
             "using_custom_colors": self.using_custom_colors,
             "custom_colors": self.custom_colors,
             "border_radius": self.border_radius,
@@ -630,12 +607,19 @@ class SteamKeyManager(QMainWindow):
             "scrollbar_width": self.scrollbar_width,
             "scroll_radius": self.scroll_radius,
         }
-        self.config_file.write_text(json.dumps(config, indent=4))
+        save_config(config)
+
+    def show_update_message_if_needed(self):
+        if self.show_update_message:
+            QMessageBox.information(None, "Arooga, new version", f"Successfully updated to version: {CURRENT_BUILD}")
+            self.show_update_message = False
+            self.save_config()
 
 def main():
     app = QApplication(sys.argv)
     window = SteamKeyManager()
     window.show()
+    window.show_update_message_if_needed()
     sys.exit(app.exec())
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ import os
 import sys
 import logging
 import subprocess
+from SteamKM_Config import load_config, save_config
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -69,6 +70,7 @@ def download_update(latest_version, progress_callback):
 class UpdateManager:
     def __init__(self, parent=None, current_version=CURRENT_BUILD):
         self.parent = parent
+        self.cleanup_old_files()
         self.current_version = current_version
         self.update_check_thread = UpdateCheckThread()
         self.update_check_thread.update_available.connect(self.on_update_available)
@@ -83,6 +85,18 @@ class UpdateManager:
             update_available_label = self.parent.findChild(QLabel, "update_available_label")
             if update_available_label:
                 update_available_label.setVisible(True)
+
+    def cleanup_old_files(self):
+        backup_file = os.path.realpath(sys.executable) + ".bak"
+        restart_script = "restart_script.py"
+        
+        for file_path in [backup_file, restart_script]:
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                    print(f"Removed {file_path}")
+                except Exception as e:
+                    print(f"Failed to remove {file_path}: {e}")
 
 class UpdateCheckThread(QThread):
     update_available = Signal(bool)
@@ -125,26 +139,44 @@ class UpdateDialog(QDialog):
         self.latest_version = None
         self.download_thread = None
         self.setup_ui()
+        
+        try:
+            config = load_config()
+            saved_branch = config.get("selected_branch", "Stable")
+            self.branch_combo.setCurrentText(saved_branch)
+        except Exception as e:
+            logging.error(f"Failed to load config: {e}")
+
         QTimer.singleShot(100, self.fetch_releases)
 
     def setup_ui(self):
         main_layout = QVBoxLayout()
 
         version_group = QGroupBox()
-        version_layout = QVBoxLayout()
+        version_layout = QHBoxLayout()
+
         version_label = QLabel(f"Current Version: <b>{self.current_version}</b>")
         version_layout.addWidget(version_label)
+
+        select_branch_label = QLabel("Select Branch:")
+        version_layout.addWidget(select_branch_label, alignment=Qt.AlignRight)
+
+        self.branch_combo = QComboBox(fixedWidth=65)
+        self.branch_combo.addItems(["Stable", "Beta"])
+        if GITHUB_TOKEN:
+            self.branch_combo.addItem("Alpha")
+        self.branch_combo.currentIndexChanged.connect(self.fetch_releases)
+        version_layout.addWidget(self.branch_combo)
+
         version_group.setLayout(version_layout)
         main_layout.addWidget(version_group)
 
         check_update_group = QGroupBox()
         check_update_layout = QVBoxLayout()
-
         self.update_label = QLabel("Checking for updates...", alignment=Qt.AlignCenter)
         check_update_layout.addWidget(self.update_label)
 
         button_layout = QHBoxLayout()
-
         self.check_updates_button = QPushButton("Check", fixedWidth=75)
         self.check_updates_button.clicked.connect(self.fetch_releases)
         button_layout.addWidget(self.check_updates_button)
@@ -176,6 +208,7 @@ class UpdateDialog(QDialog):
         changelog_layout.addWidget(changelog_label)
 
         self.changelog_text = QTextEdit(readOnly=True)
+        self.changelog_text.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         changelog_layout.addWidget(self.changelog_text)
         changelog_group.setLayout(changelog_layout)
         main_layout.addWidget(changelog_group)
@@ -186,24 +219,47 @@ class UpdateDialog(QDialog):
         self.setLayout(main_layout)
 
     def fetch_releases(self):
+        branch = self.branch_combo.currentText().lower()
         headers = {"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN else {}
         try:
             response = requests.get(f"https://api.github.com/repos/AbelSniffel/SteamKM/releases", headers=headers)
             response.raise_for_status()
             releases = response.json()
             versions = [release["tag_name"] for release in releases]
+            
+            # Save the selected branch to the config
+            try:
+                config = load_config()
+                config["selected_branch"] = branch
+                save_config(config)
+            except Exception as e:
+                logging.error(f"Failed to save config: {e}")
+            
+            # Filter versions based on the selected branch
+            if branch == "stable":
+                versions = [v for v in versions if "-stable" in v]
+            elif branch == "beta":
+                versions = [v for v in versions if "-beta" in v]
+            elif branch == "alpha":
+                versions = [v for v in versions if "-alpha" in v]
+            
             latest_version = versions[0] if versions else None
 
             self.version_combo.clear()
             local_version = parse(self.current_version)
-            for version in versions:
-                item_text = version
-                if version == latest_version and parse(version) > local_version:
-                    item_text = f"{version} (latest)"
-                self.version_combo.addItem(item_text)
-
+            if versions:
+                for version in versions:
+                    item_text = version
+                    if version == latest_version and parse(version) > local_version:
+                        item_text = f"{version} (latest)"
+                    self.version_combo.addItem(item_text)
+                self.download_button.setVisible(True)
+            else:
+                self.version_combo.addItem("No Available Updates")
+                self.version_combo.setFixedWidth(140)
+                self.download_button.setVisible(False)
+            
             self.version_combo.setVisible(True)
-            self.download_button.setVisible(True)
             self.fetch_changelog()
 
             if latest_version and local_version >= parse(latest_version):
@@ -211,6 +267,7 @@ class UpdateDialog(QDialog):
                 self.version_combo.setFixedWidth(85)
                 return
             self.update_label.setText("Select a version to download.")
+
         except Exception as e:
             self.update_label.setText("Failed to check for updates. Please try again later.")
             logging.error(f"Error checking for updates: {e}")
@@ -283,6 +340,13 @@ class UpdateDialog(QDialog):
             self.cancel_button.setVisible(False)
             self.download_button.setVisible(True)
             
+            try:
+                config = load_config()
+                config["show_update_message"] = True
+                save_config(config)
+            except Exception as e:
+                logging.error(f"Failed to update config file: {e}")
+
             # Create a temporary script to handle the restart
             restart_script = """
     import os
@@ -293,7 +357,6 @@ class UpdateDialog(QDialog):
     new_executable = '{}'
     old_executable = '{}'
     backup_executable = '{}'
-    update_flag_file = '{}'
 
     # Wait for the main application to close
     time.sleep(2)
@@ -302,17 +365,13 @@ class UpdateDialog(QDialog):
     os.remove(old_executable)
     os.rename(new_executable, old_executable)
 
-    # Optionally, remove the backup file if it exists
+    # Remove the backup file if it exists
     if os.path.exists(backup_executable):
         os.remove(backup_executable)
 
-    # Create a flag file to indicate the update message has been shown
-    with open(update_flag_file, 'w') as f:
-        f.write('1')
-
     # Restart the application
     os.execv(old_executable, ['python'] + sys.argv)
-    """.format(os.path.realpath(sys.executable) + ".new", os.path.realpath(sys.executable), os.path.realpath(sys.executable) + ".bak", os.path.realpath(sys.executable) + ".update_flag")
+    """.format(os.path.realpath(sys.executable) + ".new", os.path.realpath(sys.executable), os.path.realpath(sys.executable) + ".bak")
 
             # Write the restart script to a temporary file
             with open("restart_script.py", "w") as f:
@@ -328,11 +387,3 @@ class UpdateDialog(QDialog):
             msg_box(self, "Download Failed", f"Update {self.latest_version} failed to download.")
             self.download_thread.deleteLater()
             self.download_thread = None
-
-def show_update_message_if_needed():
-    update_flag_file = os.path.realpath(sys.executable) + ".update_flag"
-    if os.path.exists(update_flag_file):
-        # Show the update message
-        QMessageBox.information(None, "Update Success", f"Successfully updated to version: {CURRENT_BUILD}")
-        # Remove the flag file after showing the message
-        os.remove(update_flag_file)
