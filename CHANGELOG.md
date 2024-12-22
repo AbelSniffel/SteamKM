@@ -1,4 +1,4 @@
-0.5.0-beta
+0.5.1-beta
 + Added version selector to choose which version to install
 + Added download time estimation
 + Added download cancellation button
