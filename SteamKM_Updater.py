@@ -139,26 +139,44 @@ class UpdateDialog(QDialog):
         self.latest_version = None
         self.download_thread = None
         self.setup_ui()
+        
+        try:
+            config = load_config()
+            saved_branch = config.get("selected_branch", "Stable")
+            self.branch_combo.setCurrentText(saved_branch)
+        except Exception as e:
+            logging.error(f"Failed to load config: {e}")
+
         QTimer.singleShot(100, self.fetch_releases)
 
     def setup_ui(self):
         main_layout = QVBoxLayout()
 
         version_group = QGroupBox()
-        version_layout = QVBoxLayout()
+        version_layout = QHBoxLayout()
+
         version_label = QLabel(f"Current Version: <b>{self.current_version}</b>")
         version_layout.addWidget(version_label)
+
+        select_branch_label = QLabel("Select Branch:")
+        version_layout.addWidget(select_branch_label, alignment=Qt.AlignRight)
+
+        self.branch_combo = QComboBox(fixedWidth=65)
+        self.branch_combo.addItems(["Stable", "Beta"])
+        if GITHUB_TOKEN:
+            self.branch_combo.addItem("Alpha")
+        self.branch_combo.currentIndexChanged.connect(self.fetch_releases)
+        version_layout.addWidget(self.branch_combo)
+
         version_group.setLayout(version_layout)
         main_layout.addWidget(version_group)
 
         check_update_group = QGroupBox()
         check_update_layout = QVBoxLayout()
-
         self.update_label = QLabel("Checking for updates...", alignment=Qt.AlignCenter)
         check_update_layout.addWidget(self.update_label)
 
         button_layout = QHBoxLayout()
-
         self.check_updates_button = QPushButton("Check", fixedWidth=75)
         self.check_updates_button.clicked.connect(self.fetch_releases)
         button_layout.addWidget(self.check_updates_button)
@@ -190,6 +208,7 @@ class UpdateDialog(QDialog):
         changelog_layout.addWidget(changelog_label)
 
         self.changelog_text = QTextEdit(readOnly=True)
+        self.changelog_text.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         changelog_layout.addWidget(self.changelog_text)
         changelog_group.setLayout(changelog_layout)
         main_layout.addWidget(changelog_group)
@@ -200,24 +219,47 @@ class UpdateDialog(QDialog):
         self.setLayout(main_layout)
 
     def fetch_releases(self):
+        branch = self.branch_combo.currentText().lower()
         headers = {"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN else {}
         try:
             response = requests.get(f"https://api.github.com/repos/AbelSniffel/SteamKM/releases", headers=headers)
             response.raise_for_status()
             releases = response.json()
             versions = [release["tag_name"] for release in releases]
+            
+            # Save the selected branch to the config
+            try:
+                config = load_config()
+                config["selected_branch"] = branch
+                save_config(config)
+            except Exception as e:
+                logging.error(f"Failed to save config: {e}")
+            
+            # Filter versions based on the selected branch
+            if branch == "stable":
+                versions = [v for v in versions if "-stable" in v]
+            elif branch == "beta":
+                versions = [v for v in versions if "-beta" in v]
+            elif branch == "alpha":
+                versions = [v for v in versions if "-alpha" in v]
+            
             latest_version = versions[0] if versions else None
 
             self.version_combo.clear()
             local_version = parse(self.current_version)
-            for version in versions:
-                item_text = version
-                if version == latest_version and parse(version) > local_version:
-                    item_text = f"{version} (latest)"
-                self.version_combo.addItem(item_text)
-
+            if versions:
+                for version in versions:
+                    item_text = version
+                    if version == latest_version and parse(version) > local_version:
+                        item_text = f"{version} (latest)"
+                    self.version_combo.addItem(item_text)
+                self.download_button.setVisible(True)
+            else:
+                self.version_combo.addItem("No Available Updates")
+                self.version_combo.setFixedWidth(140)
+                self.download_button.setVisible(False)
+            
             self.version_combo.setVisible(True)
-            self.download_button.setVisible(True)
             self.fetch_changelog()
 
             if latest_version and local_version >= parse(latest_version):
@@ -225,6 +267,7 @@ class UpdateDialog(QDialog):
                 self.version_combo.setFixedWidth(85)
                 return
             self.update_label.setText("Select a version to download.")
+
         except Exception as e:
             self.update_label.setText("Failed to check for updates. Please try again later.")
             logging.error(f"Error checking for updates: {e}")
