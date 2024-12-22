@@ -134,20 +134,25 @@ class UpdateDialog(QDialog):
     def __init__(self, parent=None, current_version=CURRENT_BUILD):
         super().__init__(parent)
         self.setWindowTitle("Update Manager")
-        self.resize(430, 500)
+        self.resize(480, 600)
         self.current_version = current_version
         self.latest_version = None
         self.download_thread = None
+        self.initializing = True
         self.setup_ui()
-        
+        self.load_saved_branch()
+        self.initializing = False
+        QTimer.singleShot(100, self.fetch_releases) # Delay update fetch so that the UI can fire right up
+
+    def load_saved_branch(self):
         try:
             config = load_config()
-            saved_branch = config.get("selected_branch", "Stable")
-            self.branch_combo.setCurrentText(saved_branch)
+            saved_branch = config.get("selected_branch", "Beta")
+            index = self.branch_combo.findText(saved_branch.capitalize())
+            if index >= 0:
+                self.branch_combo.setCurrentIndex(index)
         except Exception as e:
-            logging.error(f"Failed to load config: {e}")
-
-        QTimer.singleShot(100, self.fetch_releases)
+            logging.error(f"Failed to load saved branch: {e}")
 
     def setup_ui(self):
         main_layout = QVBoxLayout()
@@ -165,7 +170,7 @@ class UpdateDialog(QDialog):
         self.branch_combo.addItems(["Stable", "Beta"])
         if GITHUB_TOKEN:
             self.branch_combo.addItem("Alpha")
-        self.branch_combo.currentIndexChanged.connect(self.fetch_releases)
+        self.branch_combo.currentIndexChanged.connect(self.on_branch_changed)
         version_layout.addWidget(self.branch_combo)
 
         version_group.setLayout(version_layout)
@@ -204,7 +209,7 @@ class UpdateDialog(QDialog):
         changelog_group = QGroupBox()
         changelog_layout = QVBoxLayout()
 
-        changelog_label = QLabel("Changelog", alignment=Qt.AlignLeft)
+        changelog_label = QLabel("Changelog:", alignment=Qt.AlignLeft)
         changelog_layout.addWidget(changelog_label)
 
         self.changelog_text = QTextEdit(readOnly=True)
@@ -218,6 +223,21 @@ class UpdateDialog(QDialog):
 
         self.setLayout(main_layout)
 
+    def on_branch_changed(self):
+        branch = self.branch_combo.currentText().lower()
+
+        if not self.initializing:
+            self.update_label.setText("Loading...")
+            
+            try:
+                config = load_config()
+                config["selected_branch"] = branch
+                save_config(config)
+            except Exception as e:
+                logging.error(f"Failed to save config: {e}")
+
+            QTimer.singleShot(100, self.fetch_releases)
+
     def fetch_releases(self):
         branch = self.branch_combo.currentText().lower()
         headers = {"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN else {}
@@ -226,14 +246,6 @@ class UpdateDialog(QDialog):
             response.raise_for_status()
             releases = response.json()
             versions = [release["tag_name"] for release in releases]
-            
-            # Save the selected branch to the config
-            try:
-                config = load_config()
-                config["selected_branch"] = branch
-                save_config(config)
-            except Exception as e:
-                logging.error(f"Failed to save config: {e}")
             
             # Filter versions based on the selected branch
             if branch == "stable":
@@ -267,7 +279,6 @@ class UpdateDialog(QDialog):
                 self.version_combo.setFixedWidth(85)
                 return
             self.update_label.setText("Select a version to download.")
-
         except Exception as e:
             self.update_label.setText("Failed to check for updates. Please try again later.")
             logging.error(f"Error checking for updates: {e}")
@@ -275,7 +286,34 @@ class UpdateDialog(QDialog):
     def fetch_changelog(self):
         try:
             response = requests.get(f"https://raw.githubusercontent.com/AbelSniffel/SteamKM/Beta/CHANGELOG.md")
-            self.changelog_text.setPlainText(response.text if response.status_code == 200 else "Failed to fetch changelog.")
+            if response.status_code == 200:
+                changelog_text = response.text
+                lines = changelog_text.split('\n')
+                # Initialize an empty list to hold the HTML lines
+                html_lines = []
+                
+                for line in lines:
+                    if line.startswith("0."):
+                        # Version header
+                        html_lines.append(f"<h3>{line}</h3>")
+                    elif line.startswith("+"):
+                        # Added items
+                        html_lines.append(f"<p><span style='color: green;'><strong>+</strong></span> {line[2:]}</p>")
+                    elif line.startswith("*"):
+                        # Tweaked items
+                        html_lines.append(f"<p><span style='color: orange;'><strong>*</strong></span> {line[2:]}</p>")
+                    elif line.startswith("-"):
+                        # Removed items
+                        html_lines.append(f"<p><span style='color: red;'><strong>-</strong></span> {line[2:]}</p>")
+                    else:
+                        # Other lines (e.g., empty lines)
+                        html_lines.append(f"<p>{line}</p>")
+                
+                # Join the HTML lines into a single string
+                html_changelog = "\n".join(html_lines)
+                self.changelog_text.setHtml(html_changelog)
+            else:
+                self.changelog_text.setPlainText("Failed to fetch changelog.")
         except Exception as e:
             self.changelog_text.setPlainText(f"Failed to fetch changelog: {e}")
 
@@ -377,11 +415,12 @@ class UpdateDialog(QDialog):
             with open("restart_script.py", "w") as f:
                 f.write(restart_script)
 
-            # Run the restart script in a new process
-            subprocess.Popen([sys.executable, "restart_script.py"])
-            
-            # Exit the current application
-            QApplication.quit()
+            try:
+                # Run the restart script in a new process
+                subprocess.Popen([sys.executable, "restart_script.py"])
+                QApplication.quit()
+            except Exception as e:
+                QMessageBox.information(self, "Restart Required", "Please reopen the program to get the latest update.")
         else:
             msg_box = QMessageBox.warning
             msg_box(self, "Download Failed", f"Update {self.latest_version} failed to download.")

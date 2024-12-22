@@ -107,6 +107,7 @@ class SteamKeyManager(QMainWindow):
         self.show_keys = False
         self.config = load_config()
         self.theme = self.config.get("theme", "dark")
+        self.selected_branch = self.config.get("selected_branch", False)
         self.show_update_message = self.config.get("show_update_message", False)
         self.using_custom_colors = self.config.get("using_custom_colors", False)
         self.custom_colors = self.config.get("custom_colors", {})
@@ -598,6 +599,7 @@ class SteamKeyManager(QMainWindow):
     def save_config(self):
         config = {
             "theme": self.theme,
+            "selected_branch": self.selected_branch,
             "show_update_message": self.show_update_message,
             "using_custom_colors": self.using_custom_colors,
             "custom_colors": self.custom_colors,
