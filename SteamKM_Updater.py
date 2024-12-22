@@ -9,6 +9,7 @@ import os
 import sys
 import logging
 import subprocess
+from SteamKM_Config import load_config, save_config
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -69,6 +70,7 @@ def download_update(latest_version, progress_callback):
 class UpdateManager:
     def __init__(self, parent=None, current_version=CURRENT_BUILD):
         self.parent = parent
+        self.cleanup_old_files()
         self.current_version = current_version
         self.update_check_thread = UpdateCheckThread()
         self.update_check_thread.update_available.connect(self.on_update_available)
@@ -83,6 +85,18 @@ class UpdateManager:
             update_available_label = self.parent.findChild(QLabel, "update_available_label")
             if update_available_label:
                 update_available_label.setVisible(True)
+
+    def cleanup_old_files(self):
+        backup_file = os.path.realpath(sys.executable) + ".bak"
+        restart_script = "restart_script.py"
+        
+        for file_path in [backup_file, restart_script]:
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                    print(f"Removed {file_path}")
+                except Exception as e:
+                    print(f"Failed to remove {file_path}: {e}")
 
 class UpdateCheckThread(QThread):
     update_available = Signal(bool)
@@ -283,10 +297,12 @@ class UpdateDialog(QDialog):
             self.cancel_button.setVisible(False)
             self.download_button.setVisible(True)
             
-            # Update the config to show the update message
-            config = json.loads(self.config_file.read_text())
-            config["show_update_message"] = True
-            self.config_file.write_text(json.dumps(config, indent=4))
+            try:
+                config = load_config()
+                config["show_update_message"] = True
+                save_config(config)
+            except Exception as e:
+                logging.error(f"Failed to update config file: {e}")
 
             # Create a temporary script to handle the restart
             restart_script = """
@@ -306,7 +322,7 @@ class UpdateDialog(QDialog):
     os.remove(old_executable)
     os.rename(new_executable, old_executable)
 
-    # Optionally, remove the backup file if it exists
+    # Remove the backup file if it exists
     if os.path.exists(backup_executable):
         os.remove(backup_executable)
 
