@@ -1,16 +1,13 @@
 0.5.0-beta
-+ Added version selector to choose which version to install straight from the GUI
++ Added version selector to choose which version to install
 + Added download time estimation
 + Added download cancellation button
 + Added popup which opens after a successful update
 + New automatic update checker which doesn't freeze the GUI
-+ Introduced scroll wheel rejection for the Edit Menu, 
-scroll with confidence without accidentally changing game categories
-
++ Scroll wheel rejection for the Edit Menu, scroll with confidence without accidentally changing game categories
 * Tweaked the color customization menu style
 * Tweaked the default themes a bit
 * Changed the Update menu layout
-
 - Removed Rich Text support from Add games field, this resolves 
 styling issues that appear when copying from stylized places (like websites)
 - Removed text "Game 1, Game 2, etc." from the Edit menu
