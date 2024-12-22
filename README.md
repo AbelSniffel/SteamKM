@@ -1,4 +1,4 @@
-### Do you have excess amount of duplicate keys? Fear not, as this program was made for you and me!
+### Do you have excess amount of duplicate Steam keys? Fear not, as this program was made for you and me!
 SteamKM (Key Manager) is a hobby project which resolves my own duplicate key problem, you can even cry at the amount of duplicate keys thanks to the built-in key counter 😿. 
 
 ### Why Choose SteamKM?
