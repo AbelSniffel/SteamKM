@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QAction, QIcon, QPixmap, QImage
 from PySide6.QtCore import Qt, QPoint, QTimer, QThread, Signal
 from SteamKM_Version import CURRENT_BUILD
-from SteamKM_Updater import UpdateDialog, UpdateManager, show_update_message_if_needed
+from SteamKM_Updater import UpdateDialog, UpdateManager
 from SteamKM_Themes import ColorConfigDialog, Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT
 from SteamKM_Icons import UPDATE_ICON, MENU_ICON, CUSTOMIZATION_ICON
 
@@ -121,9 +121,6 @@ class SteamKeyManager(QMainWindow):
         # Set up UI and Check for Updates
         self.setup_ui()
         self.update_manager = UpdateManager(self, CURRENT_BUILD)
-
-        # Show update message if needed
-        show_update_message_if_needed()
         
         # Apply initial theme
         if self.using_custom_colors:
@@ -602,6 +599,7 @@ class SteamKeyManager(QMainWindow):
             try:
                 config = json.loads(self.config_file.read_text())
                 self.theme = config.get("theme", "dark")
+                self.show_update_message = config.get("show_update_message", False)
                 self.using_custom_colors = config.get("using_custom_colors", False)
                 self.custom_colors = config.get("custom_colors", {})
                 self.border_radius = config.get("border_radius", DEFAULT_BR)
@@ -611,6 +609,7 @@ class SteamKeyManager(QMainWindow):
                 self.scroll_radius = config.get("scroll_radius", DEFAULT_SR)
             except json.JSONDecodeError:
                 self.theme = "dark"
+                self.show_update_message = False
                 self.using_custom_colors = False
                 self.custom_colors = {}
                 self.border_radius = DEFAULT_BR
@@ -618,10 +617,13 @@ class SteamKeyManager(QMainWindow):
                 self.checkbox_radius = DEFAULT_CR
                 self.scrollbar_width = DEFAULT_SW
                 self.scroll_radius = DEFAULT_SR
+        else:
+            self.show_update_message = False
 
     def save_config(self):
         config = {
             "theme": self.theme,
+            "show_update_message": self.show_update_message,
             "using_custom_colors": self.using_custom_colors,
             "custom_colors": self.custom_colors,
             "border_radius": self.border_radius,
@@ -632,10 +634,17 @@ class SteamKeyManager(QMainWindow):
         }
         self.config_file.write_text(json.dumps(config, indent=4))
 
+    def show_update_message_if_needed(self):
+        if self.show_update_message:
+            QMessageBox.information(None, "Arooga, new version", f"Successfully updated to version: {CURRENT_BUILD}")
+            self.show_update_message = False
+            self.save_config()
+
 def main():
     app = QApplication(sys.argv)
     window = SteamKeyManager()
     window.show()
+    window.show_update_message_if_needed()
     sys.exit(app.exec())
 
 if __name__ == "__main__":

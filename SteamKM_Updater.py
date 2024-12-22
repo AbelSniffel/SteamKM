@@ -283,6 +283,11 @@ class UpdateDialog(QDialog):
             self.cancel_button.setVisible(False)
             self.download_button.setVisible(True)
             
+            # Update the config to show the update message
+            config = json.loads(self.config_file.read_text())
+            config["show_update_message"] = True
+            self.config_file.write_text(json.dumps(config, indent=4))
+
             # Create a temporary script to handle the restart
             restart_script = """
     import os
@@ -293,7 +298,6 @@ class UpdateDialog(QDialog):
     new_executable = '{}'
     old_executable = '{}'
     backup_executable = '{}'
-    update_flag_file = '{}'
 
     # Wait for the main application to close
     time.sleep(2)
@@ -306,13 +310,9 @@ class UpdateDialog(QDialog):
     if os.path.exists(backup_executable):
         os.remove(backup_executable)
 
-    # Create a flag file to indicate the update message has been shown
-    with open(update_flag_file, 'w') as f:
-        f.write('1')
-
     # Restart the application
     os.execv(old_executable, ['python'] + sys.argv)
-    """.format(os.path.realpath(sys.executable) + ".new", os.path.realpath(sys.executable), os.path.realpath(sys.executable) + ".bak", os.path.realpath(sys.executable) + ".update_flag")
+    """.format(os.path.realpath(sys.executable) + ".new", os.path.realpath(sys.executable), os.path.realpath(sys.executable) + ".bak")
 
             # Write the restart script to a temporary file
             with open("restart_script.py", "w") as f:
@@ -328,11 +328,3 @@ class UpdateDialog(QDialog):
             msg_box(self, "Download Failed", f"Update {self.latest_version} failed to download.")
             self.download_thread.deleteLater()
             self.download_thread = None
-
-def show_update_message_if_needed():
-    update_flag_file = os.path.realpath(sys.executable) + ".update_flag"
-    if os.path.exists(update_flag_file):
-        # Show the update message
-        QMessageBox.information(None, "Update Success", f"Successfully updated to version: {CURRENT_BUILD}")
-        # Remove the flag file after showing the message
-        os.remove(update_flag_file)
