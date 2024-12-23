@@ -26,7 +26,6 @@ SteamKM (Key Manager) is a hobby project which resolves my own duplicate key pro
 - Hidden Keys: All saved and just added keys are automatically hidden by default.
 - Reliable Backups: Automatic and manual backup options to safeguard your data.
 - Import/Export Functionality: Transfer your library between devices effortlessly.
-- Secure Data Storage: JSON-based storage ensures privacy and ease of use.
 
 ### **Organization Tools**
 - Customizable Categories: Tailor categories to fit your collection.
