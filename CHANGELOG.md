@@ -7,6 +7,7 @@
 + Scroll wheel rejection for the Edit Menu, scroll with confidence without accidentally changing game categories
 * Tweaked the color customization menu style
 * Tweaked the default themes a bit
+* Changed the size of the checkboxes
 * Changed the Update menu layout
 - Removed Rich Text support from Add games field, this resolves 
 styling issues that appear when copying from stylized places (like websites)
