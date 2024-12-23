@@ -44,11 +44,19 @@ class EditGameDialog(QDialog):
         scroll_area_widget = QWidget()
         scroll_area.setWidget(scroll_area_widget)
         scroll_area_layout = QVBoxLayout(scroll_area_widget)
+        scroll_area_layout.setAlignment(Qt.AlignTop)
 
         self.group_boxes = []
 
         for idx, game in enumerate(self.games):
+            hbox = QHBoxLayout()
+
+            number_label = QLabel(f"{idx + 1}")
+            number_label.setStyleSheet("font-size: 24px;")
+            hbox.addWidget(number_label)
+
             group_box = QGroupBox()
+            group_box.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
             form_layout = QFormLayout()
 
             title_edit = QLineEdit(game["title"])
@@ -63,7 +71,9 @@ class EditGameDialog(QDialog):
             form_layout.addRow("Category:", category_combo)
 
             group_box.setLayout(form_layout)
-            scroll_area_layout.addWidget(group_box)
+            hbox.addWidget(group_box)
+
+            scroll_area_layout.addLayout(hbox)
             scroll_area_layout.addSpacing(10)
 
             self.group_boxes.append((group_box, title_edit, key_edit, category_combo))
@@ -95,16 +105,18 @@ class SteamKeyManager(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Steam Key Manager V3 (Beta)")
-        self.resize(860, 600)
+        self.resize(1005, 600) # original: self.resize(860, 600)
         self.data_file = Path("steam_keys.json")
         self.script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
         self.icons_dir = os.path.join(self.script_dir, "SteamKM_Icons")
         
-        # Initialize data
+        # Initialize Data
         self.categories = ["Premium", "Good", "Low Effort", "Bad", "VR", "Used", "New"]
         self.games = {}
         self.visible_keys = set()
         self.show_keys = False
+
+        # Load Initial Data
         self.config = load_config()
         self.theme = self.config.get("theme", "dark")
         self.selected_branch = self.config.get("selected_branch", False)
@@ -116,12 +128,16 @@ class SteamKeyManager(QMainWindow):
         self.checkbox_radius = self.config.get("checkbox_radius", DEFAULT_CR)
         self.scrollbar_width = self.config.get("scrollbar_width", DEFAULT_SW)
         self.scroll_radius = self.config.get("scroll_radius", DEFAULT_SR)
-        
-        # Load data
+        dock_area_int = self.config.get("dock_area", Qt.BottomDockWidgetArea.value)  # Load dock area from config as int
+        self.dock_area = Qt.DockWidgetArea(dock_area_int)  # Convert int to DockWidgetArea
+
+        # Load Steam Key Data
         self.load_key_data()
         
-        # Set up UI and Check for Updates
+        # Set up UI
         self.setup_ui()
+
+        # Check for Updates
         self.update_manager = UpdateManager(self, CURRENT_BUILD)
         
         # Apply initial theme
@@ -144,63 +160,69 @@ class SteamKeyManager(QMainWindow):
         main_widget.setLayout(main_layout)
         self.setCentralWidget(main_widget)
 
+        # Create a QDockWidget
+        self.dock = QDockWidget("Dock", self)
+        self.dock.setAllowedAreas(Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea)
+        self.dock.setFeatures(QDockWidget.NoDockWidgetFeatures)  # Disable detach and close
+        self.dock.setFeatures(QDockWidget.DockWidgetMovable)
+        dock_widget = QWidget()
+        dock_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        dock_layout = QHBoxLayout(dock_widget)
+        dock_layout.setAlignment(Qt.AlignTop)
+        self.addDockWidget(self.dock_area, self.dock)
+
+        # Connect dock location changed signal to save method
+        self.dock.dockLocationChanged.connect(self.save_dock_position)
+
         # Default Theme Toggle
         self.theme_switch = QCheckBox("Dark Mode")
         self.theme_switch.setChecked(self.theme == "dark")
         self.theme_switch.stateChanged.connect(self.toggle_default_theme)
-        theme_layout.addWidget(self.theme_switch)
-
-        # Create a QDockWidget # Really cool thing so I'll use it in the future, disabled for now
-        #dock = QDockWidget("Temporary Dock", self)
-        #dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
-        
-        # Create a simple widget to place inside the dock
-        #dock_widget = QWidget()
-        #dock_layout = QVBoxLayout(dock_widget)
-        
-        # Add some widgets to the dock
-        #label = QLabel("This is a dock widget")
-        #dock_layout.addWidget(label)
-        
-        #dock.setWidget(dock_widget)
-        
-        # Add the dock to the main window
-        #self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+        dock_layout.addWidget(self.theme_switch)
 
         # Default/Custom Theme Toggle
         self.toggle_theme_checkbox = QCheckBox("Use Custom Colors")
         self.toggle_theme_checkbox.setChecked(self.using_custom_colors)
         self.toggle_theme_checkbox.stateChanged.connect(self.toggle_custom_theme)
-        theme_layout.addWidget(self.toggle_theme_checkbox)
-        theme_layout.addSpacerItem(spacer)
+        dock_layout.addWidget(self.toggle_theme_checkbox)
+        dock_layout.addSpacerItem(spacer)
 
+        # Dock Game List Buttons
+        self.toggle_keys_button = self.create_button("Toggle All Keys", BUTTON_HEIGHT, self.toggle_all_keys_visibility)
+        dock_layout.addWidget(self.toggle_keys_button)
+        self.copy_button = self.create_button("Copy Selected Keys", BUTTON_HEIGHT, self.copy_selected_keys)
+        dock_layout.addWidget(self.copy_button)
+        self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected_games)
+        dock_layout.addWidget(self.remove_button)
+        
         # Update Available Label
-        self.update_available_label = QLabel("Update Available")
+        dock_layout.addSpacerItem(spacer)
+        self.update_available_label = QLabel("Checking Updates")
         self.update_available_label.setObjectName("update_available_label")
         self.update_available_label.setFixedWidth(95)
-        self.update_available_label.setVisible(False)
-        theme_layout.addWidget(self.update_available_label)
+        self.update_available_label.setVisible(True) # DON'T FORGET TO SET TO FALSE LATER!!!!!!!!!!!!!!!!!!
+        dock_layout.addWidget(self.update_available_label)
 
-        # Buttons
+        # Dock Buttons
         self.update_menu_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_update_dialog, 
             icon=os.path.join(self.icons_dir, "update.svg"))
+        dock_layout.addWidget(self.update_menu_button)
+            #
         self.color_config_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_color_config_dialog, 
             icon=os.path.join(self.icons_dir, "customization.svg"))
+        dock_layout.addWidget(self.color_config_button)
+            #
         self.hamburger_menu_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.show_hamburger_menu, 
             icon=os.path.join(self.icons_dir, "menu.svg"))
-        self.add_button = self.create_button("Add Games", 75, self.add_games)
-        self.toggle_keys_button = self.create_button("Toggle All Keys", BUTTON_HEIGHT, self.toggle_all_keys_visibility)
-        self.copy_button = self.create_button("Copy Selected Keys", BUTTON_HEIGHT, self.copy_selected_keys)
-        self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected_games)
+        dock_layout.addWidget(self.hamburger_menu_button)
 
-        theme_layout.addWidget(self.update_menu_button)
-        theme_layout.addWidget(self.color_config_button)
-        theme_layout.addWidget(self.hamburger_menu_button)
+        # Finalize Dock
+        self.dock.setWidget(dock_widget)
+
+        # Add Games Button
+        self.add_button = self.create_button("Add Games", 75, self.add_games)
         add_button_layout.addWidget(self.add_button)
-        button_layout.addWidget(self.toggle_keys_button)
-        button_layout.addWidget(self.copy_button)
-        button_layout.addWidget(self.remove_button)
-        
+
         # Add Games Input Box
         self.input_text = PlainTextEdit()
         self.input_text.setPlaceholderText("Enter games (one per line, format: Title XXXXX-XXXXX-XXXXX)")
@@ -590,6 +612,12 @@ class SteamKeyManager(QMainWindow):
                 QMessageBox.warning(self, "Error", f"Failed to load data: {str(e)}")
                 self.games = {}
 
+    def save_dock_position(self, area):
+        if not self.dock.isFloating():  # Only save if dock is actually docked
+            print(f"Saving dock position: {area}, value:{area.value}")
+            self.dock_area = area
+            self.save_config()
+
     def save_key_data(self):
         backup_file = self.data_file.with_suffix('.json.bak')
         if self.data_file.exists():
@@ -597,9 +625,11 @@ class SteamKeyManager(QMainWindow):
         self.data_file.write_text(json.dumps(self.games, indent=4))
 
     def save_config(self):
-        config = {
+        config = load_config()  # Load existing config
+        config.update({  # Merge with new values
             "theme": self.theme,
-            "selected_branch": self.selected_branch,
+            "selected_branch": self.selected_branch, 
+            "dock_area": self.dock_area.value,
             "show_update_message": self.show_update_message,
             "using_custom_colors": self.using_custom_colors,
             "custom_colors": self.custom_colors,
@@ -607,8 +637,8 @@ class SteamKeyManager(QMainWindow):
             "border_size": self.border_size,
             "checkbox_radius": self.checkbox_radius,
             "scrollbar_width": self.scrollbar_width,
-            "scroll_radius": self.scroll_radius,
-        }
+            "scroll_radius": self.scroll_radius
+        })
         save_config(config)
 
     def show_update_message_if_needed(self):

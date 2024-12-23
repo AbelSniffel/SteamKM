@@ -75,16 +75,15 @@ class UpdateManager:
         self.update_check_thread = UpdateCheckThread()
         self.update_check_thread.update_available.connect(self.on_update_available)
         self.update_check_thread.finished.connect(self.update_check_thread.deleteLater)
-        QTimer.singleShot(100, self.start_update_check)
+        QTimer.singleShot(1000, self.start_update_check)
 
     def start_update_check(self):
         self.update_check_thread.start()
 
     def on_update_available(self, available):
-        if available:
-            update_available_label = self.parent.findChild(QLabel, "update_available_label")
-            if update_available_label:
-                update_available_label.setVisible(True)
+        update_available_label = self.parent.findChild(QLabel, "update_available_label")
+        update_available_label.setText("Update Available")
+        update_available_label.setVisible(available)
 
     def cleanup_old_files(self):
         backup_file = os.path.realpath(sys.executable) + ".bak"
@@ -167,9 +166,7 @@ class UpdateDialog(QDialog):
         version_layout.addWidget(select_branch_label, alignment=Qt.AlignRight)
 
         self.branch_combo = QComboBox(fixedWidth=65)
-        self.branch_combo.addItems(["Stable", "Beta"])
-        if GITHUB_TOKEN:
-            self.branch_combo.addItem("Alpha")
+        self.branch_combo.addItems(["Stable", "Beta", "Alpha"])
         self.branch_combo.currentIndexChanged.connect(self.on_branch_changed)
         version_layout.addWidget(self.branch_combo)
 
@@ -285,7 +282,7 @@ class UpdateDialog(QDialog):
 
     def fetch_changelog(self):
         try:
-            response = requests.get(f"https://raw.githubusercontent.com/AbelSniffel/SteamKM/Beta/CHANGELOG.md")
+            response = requests.get(f"https://raw.githubusercontent.com/AbelSniffel/SteamKM/main/CHANGELOG.md")
             if response.status_code == 200:
                 changelog_text = response.text
                 lines = changelog_text.split('\n')

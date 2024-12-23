@@ -6,6 +6,7 @@ CONFIG_FILE_PATH = Path("manager_settings.json").resolve()
 
 def load_config():
     if CONFIG_FILE_PATH.exists():
+        print("loaded config")
         try:
             return json.loads(CONFIG_FILE_PATH.read_text())
         except json.JSONDecodeError:
@@ -14,3 +15,4 @@ def load_config():
 
 def save_config(config):
     CONFIG_FILE_PATH.write_text(json.dumps(config, indent=4))
+    print("saved config")
