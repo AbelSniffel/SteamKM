@@ -20,14 +20,23 @@ except ImportError:
     GITHUB_TOKEN = None
     logging.debug("GitHub token not found. Using unauthenticated requests.")
 
-def check_for_updates(branch="Beta"):
+def check_for_updates(config=None):
+    if config is None:
+        config = load_config()
+    
+    selected_branch = config.get("selected_branch", "Beta")
     headers = {"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN else {}
+    
     try:
         response = requests.get(f"https://api.github.com/repos/AbelSniffel/SteamKM/releases/latest", headers=headers)
         response.raise_for_status()
         latest_version = response.json().get("tag_name", "0.0.0")
         logging.debug(f"Latest version from GitHub: {latest_version}")
-        return latest_version if parse(latest_version) > parse(CURRENT_BUILD) else CURRENT_BUILD
+        
+        if selected_branch in latest_version:
+            return latest_version if parse(latest_version) > parse(CURRENT_BUILD) else CURRENT_BUILD
+        return CURRENT_BUILD
+        
     except Exception as e:
         logging.error(f"Error checking for updates: {e}")
         QMessageBox.critical(None, "Update Error", str(e))
@@ -259,9 +268,10 @@ class UpdateDialog(QDialog):
             if versions:
                 for version in versions:
                     item_text = version
-                    if version == latest_version and parse(version) > local_version:
+                    if version == latest_version:
                         item_text = f"{version} (latest)"
                     self.version_combo.addItem(item_text)
+                    self.version_combo.setFixedWidth(122)
                 self.download_button.setVisible(True)
             else:
                 self.version_combo.addItem("No Available Updates")
@@ -273,7 +283,7 @@ class UpdateDialog(QDialog):
 
             if latest_version and local_version >= parse(latest_version):
                 self.update_label.setText("You're already on the latest build.")
-                self.version_combo.setFixedWidth(85)
+                self.version_combo.setFixedWidth(122)
                 return
             self.update_label.setText("Select a version to download.")
         except Exception as e:
