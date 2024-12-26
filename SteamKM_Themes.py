@@ -12,8 +12,9 @@ DEFAULT_BS = 0  # Border Size
 DEFAULT_CR = 4  # Checkbox Radius
 DEFAULT_SR = 3  # Scrollbar Radius
 DEFAULT_SW = 14 # Scrollbar Width
-PADDING = "5"
-DEFAULT_PADDING = "padding: 0px 12px;"
+PADDING = "padding: 6px"
+DEEP_TITLE_PADDING = "padding-height: 8px"
+BUTTON_PADDING = "padding: 1px 12px;"
 COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-radius: 0px; border-right: 0px;"
 COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-left: 0px;"
 
@@ -65,25 +66,27 @@ class Theme:
         CHECKBOX_RADIUS = str(self.checkbox_radius)
         BORDER_RADIUS = str(self.border_radius)
         BORDER_SIZE = str(self.border_size)
-        MINIMUM_BORDER_SIZE = str(max(self.border_size, 2))
         SCROLL_RADIUS = str(self.scroll_radius)
         SCROLLBAR_WIDTH = str(self.scrollbar_width)
+
+        MINIMUM_BORDER_SIZE = str(max(self.border_size, 2))
+        HALF_BORDER_RADIUS = str(self.border_radius / 2)
 
         theme_stylesheet = f"""
             QWidget {{ background-color: {colors['main_background']}; color: {colors['text_color']}; border-radius: {BORDER_RADIUS}px; }}
             QLabel {{ background-color: transparent; color: {colors['text_color']}; border-radius: 0; }}
-            #FoundCountLabel {{ background-color: {colors['label_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; padding: {PADDING}px; }}
-            #DeepTitle {{ background-color: {colors['label_background']}; padding: 6px; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; height: {BUTTON_HEIGHT}; padding: {PADDING}px 12px; }}
+            #FoundCountLabel {{ background-color: {colors['label_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; {PADDING}; }}
+            #DeepTitle {{ background-color: {colors['label_background']}; padding: 6px; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; height: {BUTTON_HEIGHT}; {PADDING} 12px; margin-bottom: 4px; }}
             QTextEdit {{ background-color: {colors['add_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding-left: 5px; padding-top: 4px; height: {BUTTON_HEIGHT}; }}
-            QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding-left: 7px; height: {BUTTON_HEIGHT}; }}
+            QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding-left: 7px; height: {BUTTON_HEIGHT}; {BUTTON_PADDING}; }}
             QGroupBox {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; margin-right: 5px; }}
-            QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; {DEFAULT_PADDING}; height: {BUTTON_HEIGHT}; }}
-            QComboBox:item:selected {{ background-color: {colors['table_item_selected']}; {DEFAULT_PADDING}; }}
+            QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; {BUTTON_PADDING}; height: {BUTTON_HEIGHT}; }}
+            QComboBox:item:selected {{ background-color: {colors['table_item_selected']}; {BUTTON_PADDING}; }}
             QComboBox:drop-down {{ height: 0; width: 0; }}
             QComboBox QAbstractItemView {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
-            QPushButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; {DEFAULT_PADDING}; height: {BUTTON_HEIGHT}; }}
-            QPushButton:hover, QComboBox:hover {{ background-color: {colors['button_hover']}; }}
-            QPushButton:pressed {{ background-color: {colors['button_pressed']}; }}
+            QPushButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; {BUTTON_PADDING}; height: {BUTTON_HEIGHT}; }}
+            QPushButton:hover, QComboBox:hover, QMenu::item:selected {{ background-color: {colors['button_hover']}; }}
+            QPushButton:pressed, QMenu::item:pressed {{ background-color: {colors['button_pressed']}; }}
             QPushButton#resetButton {{ background-color: {colors['reset_button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
             QPushButton#resetButton:hover {{ background-color: {colors['reset_button_hover']}; }}
             QPushButton#resetButton:pressed {{ background-color: {colors['reset_button_pressed']}; }}
@@ -92,21 +95,19 @@ class Theme:
             QHeaderView {{ background-color: {colors['table_background']}; border: none; gridline-color: {colors['table_gridline_color']}; }}
             QHeaderView::section {{ background-color: {colors['table_background']}; }}
             QTableCornerButton::section {{ background-color: {colors['table_background']}; }}
-            QTableWidget {{ background-color: {colors['table_background']}; border: {MINIMUM_BORDER_SIZE}px solid {colors['table_border_color']}; padding: {PADDING}px; gridline-color: {colors['table_gridline_color']}; }}
+            QTableWidget {{ background-color: {colors['table_background']}; border: {MINIMUM_BORDER_SIZE}px solid {colors['table_border_color']}; {PADDING}; gridline-color: {colors['table_gridline_color']}; }}
             QTableWidget::item {{ background-color: transparent; }}
             QTableWidget::item:selected {{ background-color: {colors['table_item_selected']}; }}
             QScrollBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; }}
             QScrollBar:vertical {{ width: {SCROLLBAR_WIDTH}px; }}
             QScrollBar:horizontal {{ height: {SCROLLBAR_WIDTH}px; }}
-            QScrollBar::handle {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px }}
+            QScrollBar::handle, QProgressBar::chunk {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px; }}
             QScrollBar::add-page, QScrollBar::sub-page {{ background-color: none; }}
             QScrollBar::add-line, QScrollBar::sub-line {{ width: 0px; height: 0px; }}
-            QProgressBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; text-align: center; height: 6px }}
-            QProgressBar::chunk {{ background-color: {colors['scrollbar_handle']}; border-radius: {SCROLL_RADIUS}px }}
-            QMenu {{ background-color: {colors['main_background']}; padding: {PADDING}px; border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
-            QMenu::item {{ padding: {PADDING}px 15px; border-radius: 4px; }}
-            QMenu::item:selected {{ background-color: {colors['button_hover']}; }}
-            QMenu::item:pressed {{ background-color: {colors['button_pressed']}; }}
+            QProgressBar {{ background-color: {colors['scrollbar_background']}; border-radius: {SCROLL_RADIUS}px; text-align: center; height: 6px; }}
+            QMenu {{ background-color: {colors['main_background']}; {PADDING}; border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
+            QMenu::item {{ {PADDING} 15px; border-radius: {HALF_BORDER_RADIUS}px; }}
+            QDockWidget::title {{ padding: 6px; }}
         """
         
         return theme_stylesheet
@@ -139,22 +140,24 @@ class ColorConfigDialog(QDialog):
         groups = [
             ("General Colors", [
                 ("Text", "text_color"),
-                ("Background", "main_background"),
+                ("Main Background", "main_background"),
                 ("Label Background", "label_background"),
+            ]),
+            ("Add & Search", [
                 ("Search Background", "search_bar_background"),
                 ("Add Games Background", "add_games_background"),
             ]),
             ("Border Colors", [
-                ("Generic Border", "generic_border_color"),
-                ("Interactables Border", "interactables_border_color"),
-                ("Game List Border", "table_border_color"),
+                ("Non-Interactables", "generic_border_color"),
+                ("Interactables", "interactables_border_color"),
+                ("Game List", "table_border_color"),
             ]),
             ("Game List", [
                 ("Gridline", "table_gridline_color"),
                 ("Background", "table_background"),
                 ("Selected Item", "table_item_selected"),
             ]),
-            ("Scrollbar and Progress bar", [
+            ("Scroll & Progress bar", [
                 ("Handle", "scrollbar_handle"),
                 ("Background", "scrollbar_background"),
             ]),
@@ -194,7 +197,6 @@ class ColorConfigDialog(QDialog):
         title_label.setObjectName("DeepTitle")
         title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(title_label)
-        layout.addSpacing(5)
 
         # Add the elements below the title
         form_layout = QFormLayout()
@@ -236,7 +238,6 @@ class ColorConfigDialog(QDialog):
         border_group.setObjectName("DeepTitle")
         border_group.setAlignment(Qt.AlignCenter)
         layout.addWidget(border_group)
-        layout.addSpacing(4)
         self.border_group.setLayout(layout)
 
         sliders = [

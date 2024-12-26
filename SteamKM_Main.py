@@ -10,7 +10,7 @@ from pathlib import Path
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QTextEdit, QTableWidget, 
     QTableWidgetItem, QMenu, QMessageBox, QCheckBox, QLineEdit, QFileDialog, QComboBox, QDialog, QFormLayout, 
-    QGroupBox, QScrollArea, QSpacerItem, QSizePolicy, QDockWidget
+    QGroupBox, QScrollArea, QSpacerItem, QSizePolicy, QDockWidget, QInputDialog
 )
 from PySide6.QtGui import QAction, QIcon, QPixmap, QImage
 from PySide6.QtCore import Qt, QPoint, QTimer, QThread, Signal
@@ -19,85 +19,10 @@ from SteamKM_Updater import UpdateDialog, UpdateManager
 from SteamKM_Themes import ColorConfigDialog, Theme, DEFAULT_BR, DEFAULT_BS, DEFAULT_CR, DEFAULT_SR, DEFAULT_SW, BUTTON_HEIGHT
 from SteamKM_Icons import UPDATE_ICON, MENU_ICON, CUSTOMIZATION_ICON
 from SteamKM_Config import load_config, save_config
+from SteamKM_Edit_Menu import EditGameDialog
+from SteamKM_Category_Menu import CategoryManagerDialog
 
-class CustomComboBox(QComboBox):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-    def wheelEvent(self, event):
-        event.ignore()
-
-class EditGameDialog(QDialog):
-    def __init__(self, parent=None, games=None):
-        super().__init__(parent)
-        self.setWindowTitle("Edit Games")
-        self.resize(400, 350)
-        self.games = games if games else []
-        self.setup_ui()
-
-    def setup_ui(self):
-        main_layout = QVBoxLayout()
-        self.setLayout(main_layout)
-
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area_widget = QWidget()
-        scroll_area.setWidget(scroll_area_widget)
-        scroll_area_layout = QVBoxLayout(scroll_area_widget)
-        scroll_area_layout.setAlignment(Qt.AlignTop)
-
-        self.group_boxes = []
-
-        for idx, game in enumerate(self.games):
-            hbox = QHBoxLayout()
-
-            number_label = QLabel(f"{idx + 1}")
-            number_label.setStyleSheet("font-size: 24px;")
-            hbox.addWidget(number_label)
-
-            group_box = QGroupBox()
-            group_box.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-            form_layout = QFormLayout()
-
-            title_edit = QLineEdit(game["title"])
-            form_layout.addRow("Title:", title_edit)
-
-            key_edit = QLineEdit(game["key"])
-            form_layout.addRow("Key:", key_edit)
-
-            category_combo = CustomComboBox()
-            category_combo.addItems(["Premium", "Good", "Low Effort", "Bad", "VR", "Used", "New"])
-            category_combo.setCurrentText(game["category"])
-            form_layout.addRow("Category:", category_combo)
-
-            group_box.setLayout(form_layout)
-            hbox.addWidget(group_box)
-
-            scroll_area_layout.addLayout(hbox)
-            scroll_area_layout.addSpacing(10)
-
-            self.group_boxes.append((group_box, title_edit, key_edit, category_combo))
-
-        main_layout.addWidget(scroll_area)
-
-        # Buttons
-        button_layout = QHBoxLayout()
-        apply_button = QPushButton("Apply")
-        apply_button.clicked.connect(self.apply_changes)
-        button_layout.addWidget(apply_button)
-        cancel_button = QPushButton("Cancel")
-        cancel_button.clicked.connect(self.reject)
-        button_layout.addWidget(cancel_button)
-        main_layout.addLayout(button_layout)
-
-    def apply_changes(self):
-        for idx, (group_box, title_edit, key_edit, category_combo) in enumerate(self.group_boxes):
-            self.games[idx]["title"] = title_edit.text()
-            self.games[idx]["key"] = key_edit.text()
-            self.games[idx]["category"] = category_combo.currentText()
-        self.accept()
-
-class PlainTextEdit(QTextEdit): # This removes the rich text support, downside being a miniscule amount of delay after each keypress
+class PlainTextInput(QTextEdit): # This removes the rich text support, downside being a miniscule amount of delay after each keypress
     def insertFromMimeData(self, source):
         self.insertPlainText(source.text())
 
@@ -131,6 +56,9 @@ class SteamKeyManager(QMainWindow):
         dock_area_int = self.config.get("dock_area", Qt.BottomDockWidgetArea.value)  # Load dock area from config as int
         self.dock_area = Qt.DockWidgetArea(dock_area_int)  # Convert int to DockWidgetArea
 
+        self.categories = self.config.get("categories", ["Premium", "Good", "Low Effort", "Bad", "VR", "Used", "New"])
+        save_config(self.config)  # Save default categories if not present
+
         # Load Steam Key Data
         self.load_key_data()
         
@@ -148,7 +76,9 @@ class SteamKeyManager(QMainWindow):
 
     def setup_ui(self):
         # GUI Layout Elements
-        spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        fixedspacer = QSpacerItem(5, 0, QSizePolicy.Fixed, QSizePolicy.Fixed)
+        fixedspacerlarger = QSpacerItem(30, 0, QSizePolicy.Fixed, QSizePolicy.Fixed)
+        expandingspacer = QSpacerItem(10, 0, QSizePolicy.Expanding, QSizePolicy.Fixed)
         main_widget = QWidget()
         main_layout = QVBoxLayout()
         theme_layout = QHBoxLayout()
@@ -161,7 +91,7 @@ class SteamKeyManager(QMainWindow):
         self.setCentralWidget(main_widget)
 
         # Create a QDockWidget
-        self.dock = QDockWidget("Dock", self)
+        self.dock = QDockWidget("Function Dock", self)
         self.dock.setAllowedAreas(Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea)
         self.dock.setFeatures(QDockWidget.NoDockWidgetFeatures)  # Disable detach and close
         self.dock.setFeatures(QDockWidget.DockWidgetMovable)
@@ -181,26 +111,29 @@ class SteamKeyManager(QMainWindow):
         dock_layout.addWidget(self.theme_switch)
 
         # Default/Custom Theme Toggle
+        dock_layout.addSpacerItem(fixedspacer)
         self.toggle_theme_checkbox = QCheckBox("Use Custom Colors")
         self.toggle_theme_checkbox.setChecked(self.using_custom_colors)
         self.toggle_theme_checkbox.stateChanged.connect(self.toggle_custom_theme)
         dock_layout.addWidget(self.toggle_theme_checkbox)
-        dock_layout.addSpacerItem(spacer)
 
         # Dock Game List Buttons
+        dock_layout.addSpacerItem(fixedspacerlarger)
         self.toggle_keys_button = self.create_button("Toggle All Keys", BUTTON_HEIGHT, self.toggle_all_keys_visibility)
         dock_layout.addWidget(self.toggle_keys_button)
         self.copy_button = self.create_button("Copy Selected Keys", BUTTON_HEIGHT, self.copy_selected_keys)
         dock_layout.addWidget(self.copy_button)
         self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected_games)
         dock_layout.addWidget(self.remove_button)
+        self.manage_categories_button = self.create_button("Manage Categories", BUTTON_HEIGHT, self.open_category_manager)
+        dock_layout.addWidget(self.manage_categories_button)
         
         # Update Available Label
-        dock_layout.addSpacerItem(spacer)
+        dock_layout.addSpacerItem(expandingspacer)
         self.update_available_label = QLabel("Checking Updates")
         self.update_available_label.setObjectName("update_available_label")
         self.update_available_label.setFixedWidth(95)
-        self.update_available_label.setVisible(True) # DON'T FORGET TO SET TO FALSE LATER!!!!!!!!!!!!!!!!!!
+        self.update_available_label.setVisible(True)
         dock_layout.addWidget(self.update_available_label)
 
         # Dock Buttons
@@ -224,7 +157,7 @@ class SteamKeyManager(QMainWindow):
         add_button_layout.addWidget(self.add_button)
 
         # Add Games Input Box
-        self.input_text = PlainTextEdit()
+        self.input_text = PlainTextInput()
         self.input_text.setPlaceholderText("Enter games (one per line, format: Title XXXXX-XXXXX-XXXXX)")
         self.input_text.setLineWrapMode(QTextEdit.NoWrap)
         self.input_text.setFixedHeight(75)
@@ -283,10 +216,6 @@ class SteamKeyManager(QMainWindow):
         else:
             self.apply_theme(self.theme)
 
-    def open_update_dialog(self):
-        dialog = UpdateDialog(self, CURRENT_BUILD)
-        dialog.exec()
-
     def create_button(self, text, height, slot, icon=None, fixed_width=None):
         icon_map = {
             os.path.join(self.icons_dir, "update.svg"): UPDATE_ICON,
@@ -306,6 +235,10 @@ class SteamKeyManager(QMainWindow):
     def parse_input_line(self, line):
         match = re.match(r'(.+?)\s+([A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5})', line)
         return match.groups() if match else (None, None)
+    
+    def open_update_dialog(self):
+        dialog = UpdateDialog(self, CURRENT_BUILD)
+        dialog.exec()
 
     def show_hamburger_menu(self):
         menu = QMenu(self)
@@ -355,6 +288,42 @@ class SteamKeyManager(QMainWindow):
             self.current_game = self.games[unique_id]
             menu.exec(self.table_widget.viewport().mapToGlobal(position))
 
+    def open_category_manager(self):
+        dialog = CategoryManagerDialog(self.categories, self)
+        if dialog.exec() == QDialog.Accepted:
+            old_categories = self.categories.copy()
+            self.categories = dialog.categories
+            self.config["categories"] = self.categories
+            save_config(self.config)
+            
+            # Update all games with renamed categories
+            category_map = dialog.category_map
+            for game in self.games.values():
+                if game["category"] in category_map:
+                    game["category"] = category_map[game["category"]]
+                elif game["category"] not in self.categories:
+                    game["category"] = "New"
+            
+            self.save_key_data()
+            self.category_filter.clear()
+            self.category_filter.addItem("All Categories")
+            self.category_filter.addItems(self.categories)
+            self.refresh_game_list()
+    
+    def open_color_config_dialog(self):
+        self.toggle_theme_checkbox.setChecked(True)
+        dialog = ColorConfigDialog(self, self.custom_colors, self.theme, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
+        if dialog.exec() == QDialog.Accepted:
+            self.custom_colors = dialog.current_colors
+            self.using_custom_colors = True
+            self.border_radius = dialog.border_radius
+            self.border_size = dialog.border_size
+            self.checkbox_radius = dialog.checkbox_radius
+            self.scrollbar_width = dialog.scrollbar_width
+            self.scroll_radius = dialog.scroll_radius
+            self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
+            self.save_config()
+
     def toggle_default_theme(self):
         self.theme = "dark" if self.theme_switch.isChecked() else "light"
         if self.using_custom_colors:
@@ -378,20 +347,6 @@ class SteamKeyManager(QMainWindow):
     def apply_custom_colors(self, colors, border_radius, border_size, checkbox_radius, scroll_radius, scrollbar_width):
         theme = Theme(theme=self.theme, custom_colors=colors, border_radius=border_radius, border_size=border_size, checkbox_radius=checkbox_radius, scroll_radius=scroll_radius, scrollbar_width=scrollbar_width)
         self.setStyleSheet(theme.generate_stylesheet())
-
-    def open_color_config_dialog(self):
-        self.toggle_theme_checkbox.setChecked(True)
-        dialog = ColorConfigDialog(self, self.custom_colors, self.theme, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
-        if dialog.exec() == QDialog.Accepted:
-            self.custom_colors = dialog.current_colors
-            self.using_custom_colors = True
-            self.border_radius = dialog.border_radius
-            self.border_size = dialog.border_size
-            self.checkbox_radius = dialog.checkbox_radius
-            self.scrollbar_width = dialog.scrollbar_width
-            self.scroll_radius = dialog.scroll_radius
-            self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
-            self.save_config()
     
     def censor_key(self, key):
         return '-'.join(['*' * len(part) for part in key.split('-')])
@@ -570,12 +525,15 @@ class SteamKeyManager(QMainWindow):
             
             added_count = [0]
             added_titles = []
+            new_categories = set()
 
             def add_game(title, code, category):
+                if category and category not in self.categories:
+                    new_categories.add(category)
                 if title and code and not any(game["key"] == code for game in self.games.values()):
                     unique_id = str(uuid.uuid4())
-                    self.games[unique_id] = {"title": title, "key": code, "category": category}
-                    added_count[0] += 1  # Increment the count
+                    self.games[unique_id] = {"title": title, "key": code, "category": category if category in self.categories else "New"}
+                    added_count[0] += 1
                     added_titles.append(title)
 
             if isinstance(imported_data, list):
@@ -584,6 +542,15 @@ class SteamKeyManager(QMainWindow):
             elif isinstance(imported_data, dict):
                 for game in imported_data.values():
                     add_game(game.get("title"), game.get("key"), game.get("category", "New"))
+            
+            # Add new categories found in import
+            if new_categories:
+                self.categories.extend(list(new_categories))
+                self.config["categories"] = self.categories
+                save_config(self.config)
+                self.category_filter.clear()
+                self.category_filter.addItem("All Categories")
+                self.category_filter.addItems(self.categories)
             
             if added_count[0] > 0:
                 added_titles_str = ", ".join(added_titles)
