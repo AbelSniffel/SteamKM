@@ -1,12 +1,11 @@
-# SteamKM_Category_Menu.py 
-# Need to do: Make the categories part scrollable
+# SteamKM_Category_Menu.py
 from functools import partial
 from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QTextEdit, QMessageBox, QLineEdit, QDialog, QFormLayout, 
-    QGroupBox, QScrollArea, QSpacerItem, QSizePolicy, QInputDialog
+    QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QDialog, 
+    QGroupBox, QScrollArea, QSpacerItem, QSizePolicy, QMessageBox
 )
 from PySide6.QtCore import Qt
-from SteamKM_Themes import BUTTON_HEIGHT, COLOR_PICKER_BUTTON_STYLE, COLOR_RESET_BUTTON_STYLE
+from SteamKM_Themes import BUTTON_HEIGHT, COLOR_RESET_BUTTON_STYLE
 
 class CategoryManagerDialog(QDialog):
     def __init__(self, categories, parent=None):
@@ -14,19 +13,24 @@ class CategoryManagerDialog(QDialog):
         self.categories = categories.copy()
         self.category_map = {}  # Maps old category names to new ones
         self.setup_ui()
-        
+        self.resize(350, 400)
+
     def setup_ui(self):
         self.setWindowTitle("Manage Categories")
         layout = QVBoxLayout(self)
-        
-        # Category list
-        self.group_box = QGroupBox()
-        self.form_layout = QFormLayout()
-        self.group_box.setLayout(self.form_layout)
-        self.refresh_categories()
-        layout.addWidget(self.group_box)
 
-        # Add category section
+        # Category list
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(self.scroll_content)
+        self.scroll_layout.setContentsMargins(0, 0, 0, 0)
+        self.scroll_layout.setSpacing(5)  # Fixed gap between entries
+        self.scroll_layout.addStretch(1)  # Force entries to the top
+        self.scroll_area.setWidget(self.scroll_content)
+        layout.addWidget(self.scroll_area)
+
+        # Add new category section
         add_layout = QHBoxLayout()
         self.new_category_input = QLineEdit()
         self.new_category_input.setPlaceholderText("New category name")
@@ -35,7 +39,7 @@ class CategoryManagerDialog(QDialog):
         add_layout.addWidget(self.new_category_input)
         add_layout.addWidget(add_button)
         layout.addLayout(add_layout)
-        
+
         # Dialog buttons
         button_box = QHBoxLayout()
         save_button = QPushButton("Save")
@@ -45,50 +49,46 @@ class CategoryManagerDialog(QDialog):
         button_box.addWidget(save_button)
         button_box.addWidget(cancel_button)
         layout.addLayout(button_box)
-        
-        self.resize(400, 500)
+
+        self.refresh_categories()
 
     def refresh_categories(self):
-        # Remove all items from the form layout
-        while self.form_layout.rowCount() > 0:
-            self.form_layout.removeRow(0)
+        # Clear existing widgets
+        for i in reversed(range(self.scroll_layout.count() - 1)):  # Exclude stretch item
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
 
-        # Add DeepTitle label to the form layout
-        group_box_label = QLabel("Categories")
-        group_box_label.setObjectName("DeepTitle")
-        group_box_label.setAlignment(Qt.AlignCenter)
-        self.form_layout.addRow(group_box_label)  # Add this line
-        
-        for i, category in enumerate(self.categories):
-            # Category name
-            name_label = QLabel(category)
-            
-            # Actions widget
-            actions_widget = QWidget()
-            actions_layout = QHBoxLayout(actions_widget)
-            actions_layout.setContentsMargins(0, 0, 0, 0)
-            actions_layout.setSpacing(0)
+        # Add category widgets
+        for category in self.categories:
+            self.add_category_widget(category)
 
-            # Add a spacer to push buttons to the right
-            spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-            actions_layout.addItem(spacer)
-            
-            edit_btn = QPushButton("Edit")
-            edit_btn.clicked.connect(partial(self.edit_category, i))
-            edit_btn.setFixedSize(100, BUTTON_HEIGHT)
-            edit_btn.setStyleSheet(f""" QPushButton {{{ COLOR_PICKER_BUTTON_STYLE }}} """)
-                
-            delete_btn = QPushButton("X")
-            delete_btn.setObjectName("resetButton")
-            delete_btn.setFixedSize(BUTTON_HEIGHT + 2, BUTTON_HEIGHT)
-            delete_btn.clicked.connect(partial(self.delete_category, i))
-            delete_btn.setFixedSize(BUTTON_HEIGHT + 2, BUTTON_HEIGHT)
-            delete_btn.setStyleSheet(f""" QPushButton {{{ COLOR_RESET_BUTTON_STYLE }}} """)
-            
-            actions_layout.addWidget(edit_btn)
-            actions_layout.addWidget(delete_btn)
-            
-            self.form_layout.addRow(name_label, actions_widget)
+    def add_category_widget(self, category):
+        count_label = QLabel(f"{self.categories.index(category) + 1}  ")
+        count_label.setStyleSheet("font-size: 15px;")
+
+        name_edit = QLineEdit(category)
+        name_edit.setObjectName("CustomLineEdit")
+        name_edit.setFixedHeight(33)
+        name_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        name_edit.editingFinished.connect(partial(self.update_category, category, name_edit))
+
+        delete_btn = QPushButton("X")
+        delete_btn.setObjectName("resetButton")
+        delete_btn.setFixedSize(BUTTON_HEIGHT + 2, BUTTON_HEIGHT)
+        delete_btn.setStyleSheet(f"QPushButton {{{COLOR_RESET_BUTTON_STYLE}}}")
+        delete_btn.clicked.connect(partial(self.delete_category, category))
+
+        hbox = QHBoxLayout()
+        hbox.setSpacing(0)
+        hbox.setContentsMargins(0, 5, 10, 0)
+        hbox.addWidget(count_label)
+        hbox.addWidget(name_edit)
+        hbox.addWidget(delete_btn)
+
+        container = QWidget()
+        container.setLayout(hbox)
+        self.scroll_layout.insertWidget(self.scroll_layout.count() - 1, container)
 
     def add_category(self):
         name = self.new_category_input.text().strip()
@@ -96,21 +96,32 @@ class CategoryManagerDialog(QDialog):
             self.categories.append(name)
             self.new_category_input.clear()
             self.refresh_categories()
-            
-    def edit_category(self, row):
-        old_name = self.categories[row]
-        new_name, ok = QInputDialog.getText(self, "Edit Category", 
-                                          "New category name:", 
-                                          text=old_name)
-        if ok and new_name.strip() and new_name != old_name:
-            self.categories[row] = new_name
-            self.category_map[old_name] = new_name
-            self.refresh_categories()
-            
-    def delete_category(self, row):
-        if len(self.categories) > 1:
-            category = self.categories[row]
-            self.categories.pop(row)
-            self.refresh_categories()
         else:
-            QMessageBox.warning(self, "Error", "Cannot delete the last category")
+            QMessageBox.warning(self, "Error", "Category name is empty or already exists.")
+
+    def delete_category(self, category):
+        if len(self.categories) > 1:
+            new_default_category = "New"
+            msg_box = QMessageBox.question(
+                self, 
+                "Confirm Deletion", 
+                f"Are you sure you want to remove the category: {category}? \nAll entries using this category will default to '{new_default_category}'.", 
+                QMessageBox.Yes | QMessageBox.No, 
+                QMessageBox.No
+            )
+            if msg_box == QMessageBox.Yes:
+                self.categories.remove(category)
+                self.refresh_categories()
+        else:
+            QMessageBox.warning(self, "Error", "Cannot delete the last category.")
+
+    def update_category(self, old_category, line_edit):
+        new_name = line_edit.text().strip()
+        if new_name and new_name != old_category and new_name not in self.categories:
+            self.categories[self.categories.index(old_category)] = new_name
+            self.category_map[old_category] = new_name
+            self.refresh_categories()
+        elif not new_name:
+            QMessageBox.warning(self, "Error", "Category name cannot be empty.")
+        elif new_name in self.categories:
+            QMessageBox.warning(self, "Error", "Category name already exists.")

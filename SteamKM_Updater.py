@@ -141,7 +141,7 @@ class DownloadThread(QThread):
 class UpdateDialog(QDialog):
     def __init__(self, parent=None, current_version=CURRENT_BUILD):
         super().__init__(parent)
-        self.setWindowTitle("Update Manager")
+        self.setWindowTitle("Update Menu")
         self.resize(480, 600)
         self.current_version = current_version
         self.latest_version = None

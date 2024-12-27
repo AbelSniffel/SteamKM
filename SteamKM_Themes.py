@@ -13,16 +13,17 @@ DEFAULT_CR = 4  # Checkbox Radius
 DEFAULT_SR = 3  # Scrollbar Radius
 DEFAULT_SW = 14 # Scrollbar Width
 PADDING = "padding: 6px"
-DEEP_TITLE_PADDING = "padding-height: 8px"
+DEEP_TITLE_PADDING = "padding: 8px"
 BUTTON_PADDING = "padding: 1px 12px;"
 COLOR_PICKER_BUTTON_STYLE = "border-top-right-radius: 0px; border-bottom-right-radius: 0px; border-right: 0px;"
 COLOR_RESET_BUTTON_STYLE = "border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-left: 0px;"
 
 class Theme:
-    def __init__(self, theme="dark", custom_colors=None, border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
+    def __init__(self, theme="dark", custom_colors=None, border_radius=DEFAULT_BR, border_size=DEFAULT_BS, border_size_interactables=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
         self.theme = theme
         self.border_radius = border_radius
         self.border_size = border_size
+        self.border_size_interactables = border_size_interactables
         self.checkbox_radius = checkbox_radius
         self.scroll_radius = scroll_radius
         self.scrollbar_width = scrollbar_width
@@ -37,7 +38,7 @@ class Theme:
             "text_color": ("white", "black"),
             "add_games_background": ("#404040", "#e6eefa"),
             "search_bar_background": ("#404040", "#e6eefa"),
-            "label_background": ("#404040", "#e6eefa"),
+            "label_background": ("#494949", "#c8deff"),
             "scrollbar_background": ("#424f47", "#c7e0f8"),
             "scrollbar_handle": ("#62a88e", "#9bc3ff"),
             "button_background": ("#525252", "#d6e8ff"),
@@ -66,6 +67,7 @@ class Theme:
         CHECKBOX_RADIUS = str(self.checkbox_radius)
         BORDER_RADIUS = str(self.border_radius)
         BORDER_SIZE = str(self.border_size)
+        BORDER_SIZE_INTERACTABLES = str(self.border_size_interactables)
         SCROLL_RADIUS = str(self.scroll_radius)
         SCROLLBAR_WIDTH = str(self.scrollbar_width)
 
@@ -76,18 +78,23 @@ class Theme:
             QWidget {{ background-color: {colors['main_background']}; color: {colors['text_color']}; border-radius: {BORDER_RADIUS}px; }}
             QLabel {{ background-color: transparent; color: {colors['text_color']}; border-radius: 0; }}
             #FoundCountLabel {{ background-color: {colors['label_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; {PADDING}; }}
-            #DeepTitle {{ background-color: {colors['label_background']}; padding: 6px; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; height: {BUTTON_HEIGHT}; {PADDING} 12px; margin-bottom: 4px; }}
+            #DeepLabel {{ background-color: {colors['label_background']}; padding: 6px; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; height: {BUTTON_HEIGHT}; {DEEP_TITLE_PADDING}; margin-bottom: 4px; }}
             QTextEdit {{ background-color: {colors['add_games_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding-left: 5px; padding-top: 4px; height: {BUTTON_HEIGHT}; }}
             QLineEdit {{ background-color: {colors['search_bar_background']}; border: {BORDER_SIZE}px solid {colors['generic_border_color']}; padding-left: 7px; height: {BUTTON_HEIGHT}; {BUTTON_PADDING}; }}
+            #CustomLineEdit {{ background-color: {colors['search_bar_background']}; {COLOR_PICKER_BUTTON_STYLE}; padding-left: 7px; height: {BUTTON_HEIGHT};
+                border-top: {BORDER_SIZE_INTERACTABLES}px solid {colors['interactables_border_color']};
+                border-bottom: {BORDER_SIZE_INTERACTABLES}px solid {colors['interactables_border_color']};
+                border-left: {BORDER_SIZE_INTERACTABLES}px solid {colors['interactables_border_color']}; }}
             QGroupBox {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['generic_border_color']}; border-radius: {BORDER_RADIUS}px; margin-right: 5px; }}
-            QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; {BUTTON_PADDING}; height: {BUTTON_HEIGHT}; }}
+            QComboBox {{ background-color: {colors['combobox_background']}; border: {BORDER_SIZE_INTERACTABLES}px solid {colors['interactables_border_color']}; {BUTTON_PADDING}; height: {BUTTON_HEIGHT}; }}
             QComboBox:item:selected {{ background-color: {colors['table_item_selected']}; {BUTTON_PADDING}; }}
             QComboBox:drop-down {{ height: 0; width: 0; }}
             QComboBox QAbstractItemView {{ border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
-            QPushButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; {BUTTON_PADDING}; height: {BUTTON_HEIGHT}; }}
+            QPushButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE_INTERACTABLES}px solid {colors['interactables_border_color']}; {BUTTON_PADDING}; height: {BUTTON_HEIGHT}; }}
+            #BoxedButton {{ background-color: {colors['button_background']}; border: {BORDER_SIZE_INTERACTABLES}px solid {colors['interactables_border_color']}; {BUTTON_PADDING}; height: {BUTTON_HEIGHT}; border-radius: {HALF_BORDER_RADIUS}px }}
             QPushButton:hover, QComboBox:hover, QMenu::item:selected {{ background-color: {colors['button_hover']}; }}
             QPushButton:pressed, QMenu::item:pressed {{ background-color: {colors['button_pressed']}; }}
-            QPushButton#resetButton {{ background-color: {colors['reset_button_background']}; border: {BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
+            QPushButton#resetButton {{ background-color: {colors['reset_button_background']}; border: {BORDER_SIZE_INTERACTABLES}px solid {colors['interactables_border_color']}; height: {BUTTON_HEIGHT}; }}
             QPushButton#resetButton:hover {{ background-color: {colors['reset_button_hover']}; }}
             QPushButton#resetButton:pressed {{ background-color: {colors['reset_button_pressed']}; }}
             QCheckBox::indicator:unchecked {{ background-color: {colors['checkbox_background_unchecked']}; height: 18; width: 18; border: 0px; border-radius: {CHECKBOX_RADIUS}px; }}
@@ -108,12 +115,13 @@ class Theme:
             QMenu {{ background-color: {colors['main_background']}; {PADDING}; border: {MINIMUM_BORDER_SIZE}px solid {colors['interactables_border_color']}; }}
             QMenu::item {{ {PADDING} 15px; border-radius: {HALF_BORDER_RADIUS}px; }}
             QDockWidget::title {{ padding: 6px; }}
+            .icon {{ fill: {colors['text_color']}; stroke: {colors['text_color']}; }}
         """
         
         return theme_stylesheet
 
 class ColorConfigDialog(QDialog):
-    def __init__(self, parent=None, current_colors=None, theme="dark", border_radius=DEFAULT_BR, border_size=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
+    def __init__(self, parent=None, current_colors=None, theme="dark", border_radius=DEFAULT_BR, border_size=DEFAULT_BS, border_size_interactables=DEFAULT_BS, checkbox_radius=DEFAULT_CR, scroll_radius=DEFAULT_SR, scrollbar_width=DEFAULT_SW):
         super().__init__(parent)
         self.setWindowTitle("Color Customization")
         self.resize(500, 700)
@@ -121,6 +129,7 @@ class ColorConfigDialog(QDialog):
         self.current_colors = current_colors if current_colors else {}
         self.border_radius = border_radius
         self.border_size = border_size
+        self.border_size_interactables = border_size_interactables
         self.checkbox_radius = checkbox_radius
         self.scroll_radius = scroll_radius
         self.scrollbar_width = scrollbar_width
@@ -148,7 +157,7 @@ class ColorConfigDialog(QDialog):
                 ("Add Games Background", "add_games_background"),
             ]),
             ("Border Colors", [
-                ("Non-Interactables", "generic_border_color"),
+                ("Generic", "generic_border_color"),
                 ("Interactables", "interactables_border_color"),
                 ("Game List", "table_border_color"),
             ]),
@@ -194,7 +203,7 @@ class ColorConfigDialog(QDialog):
 
         # Add the title as a label inside the box
         title_label = QLabel(title)
-        title_label.setObjectName("DeepTitle")
+        title_label.setObjectName("DeepLabel")
         title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(title_label)
 
@@ -234,8 +243,8 @@ class ColorConfigDialog(QDialog):
         layout = QVBoxLayout()
 
         # Add the title as a label inside the box
-        border_group = QLabel("Border Size and Radius")
-        border_group.setObjectName("DeepTitle")
+        border_group = QLabel("Border Settings")
+        border_group.setObjectName("DeepLabel")
         border_group.setAlignment(Qt.AlignCenter)
         layout.addWidget(border_group)
         self.border_group.setLayout(layout)
@@ -243,6 +252,7 @@ class ColorConfigDialog(QDialog):
         sliders = [
             ("Border Radius", "border_radius", 0, 13, self.update_border_radius, DEFAULT_BR),
             ("Border Size", "border_size", 0, 3, self.update_border_size, DEFAULT_BS),
+            ("Border Size Interactables", "border_size_interactables", 0, 3, self.update_border_size_interactables, DEFAULT_BS),
             ("Checkbox Radius", "checkbox_radius", 0, 9, self.update_checkbox_radius, DEFAULT_CR),
             ("Scrollbar Width", "scrollbar_width", 8, 14, self.update_scrollbar_width, DEFAULT_SW),
             ("Scroll Radius", "scroll_radius", 0, self.scrollbar_width // 2, self.update_scroll_radius, DEFAULT_SR)
@@ -301,7 +311,7 @@ class ColorConfigDialog(QDialog):
         self.accept()
 
     def update_preview(self):
-        self.parent().apply_custom_colors(self.current_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
+        self.parent().apply_custom_colors(self.current_colors, self.border_radius, self.border_size, self.border_size_interactables, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
 
     def update_value(self, key, value, value_label):
         setattr(self, key, value)
@@ -313,6 +323,9 @@ class ColorConfigDialog(QDialog):
 
     def update_border_size(self, value):
         self.update_value("border_size", value, self.border_size_value_label)
+
+    def update_border_size_interactables(self, value):
+        self.update_value("border_size_interactables", value, self.border_size_interactables_value_label)
 
     def update_checkbox_radius(self, value):
         self.update_value("checkbox_radius", value, self.checkbox_radius_value_label)

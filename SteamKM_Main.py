@@ -21,6 +21,7 @@ from SteamKM_Icons import UPDATE_ICON, MENU_ICON, CUSTOMIZATION_ICON
 from SteamKM_Config import load_config, save_config
 from SteamKM_Edit_Menu import EditGameDialog
 from SteamKM_Category_Menu import CategoryManagerDialog
+from SteamKM_Import import merge_imported_games_from_json, merge_imported_games_from_txt
 
 class PlainTextInput(QTextEdit): # This removes the rich text support, downside being a miniscule amount of delay after each keypress
     def insertFromMimeData(self, source):
@@ -50,6 +51,7 @@ class SteamKeyManager(QMainWindow):
         self.custom_colors = self.config.get("custom_colors", {})
         self.border_radius = self.config.get("border_radius", DEFAULT_BR)
         self.border_size = self.config.get("border_size", DEFAULT_BS)
+        self.border_size_interactables = self.config.get("border_size_interactables", DEFAULT_BS)
         self.checkbox_radius = self.config.get("checkbox_radius", DEFAULT_CR)
         self.scrollbar_width = self.config.get("scrollbar_width", DEFAULT_SW)
         self.scroll_radius = self.config.get("scroll_radius", DEFAULT_SR)
@@ -70,7 +72,7 @@ class SteamKeyManager(QMainWindow):
         
         # Apply initial theme
         if self.using_custom_colors:
-            self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
+            self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.border_size_interactables, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
         else:
             self.apply_theme(self.theme)
 
@@ -123,10 +125,8 @@ class SteamKeyManager(QMainWindow):
         dock_layout.addWidget(self.toggle_keys_button)
         self.copy_button = self.create_button("Copy Selected Keys", BUTTON_HEIGHT, self.copy_selected_keys)
         dock_layout.addWidget(self.copy_button)
-        self.remove_button = self.create_button("Remove Selected", BUTTON_HEIGHT, self.remove_selected_games)
+        self.remove_button = self.create_button("Remove Selected Keys", BUTTON_HEIGHT, self.remove_selected_games)
         dock_layout.addWidget(self.remove_button)
-        self.manage_categories_button = self.create_button("Manage Categories", BUTTON_HEIGHT, self.open_category_manager)
-        dock_layout.addWidget(self.manage_categories_button)
         
         # Update Available Label
         dock_layout.addSpacerItem(expandingspacer)
@@ -137,16 +137,13 @@ class SteamKeyManager(QMainWindow):
         dock_layout.addWidget(self.update_available_label)
 
         # Dock Buttons
-        self.update_menu_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_update_dialog, 
-            icon=os.path.join(self.icons_dir, "update.svg"))
+        self.update_menu_button = self.create_button("", BUTTON_HEIGHT, self.open_update_dialog, icon=os.path.join(self.icons_dir, "update.svg"), fixed_width=BUTTON_HEIGHT+2)
         dock_layout.addWidget(self.update_menu_button)
             #
-        self.color_config_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.open_color_config_dialog, 
-            icon=os.path.join(self.icons_dir, "customization.svg"))
+        self.color_config_button = self.create_button("", BUTTON_HEIGHT, self.open_color_config_dialog, icon=os.path.join(self.icons_dir, "customization.svg"), fixed_width=BUTTON_HEIGHT+2)
         dock_layout.addWidget(self.color_config_button)
             #
-        self.hamburger_menu_button = self.create_button(text="",  height=BUTTON_HEIGHT, fixed_width=BUTTON_HEIGHT + 2, slot=self.show_hamburger_menu, 
-            icon=os.path.join(self.icons_dir, "menu.svg"))
+        self.hamburger_menu_button = self.create_button("", BUTTON_HEIGHT, self.show_hamburger_menu, icon=os.path.join(self.icons_dir, "menu.svg"), fixed_width=BUTTON_HEIGHT+2)
         dock_layout.addWidget(self.hamburger_menu_button)
 
         # Finalize Dock
@@ -210,23 +207,11 @@ class SteamKeyManager(QMainWindow):
         # Refresh initial game list
         self.refresh_game_list()
 
-        # Apply initial theme
-        if self.using_custom_colors:
-            self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
-        else:
-            self.apply_theme(self.theme)
-
     def create_button(self, text, height, slot, icon=None, fixed_width=None):
-        icon_map = {
-            os.path.join(self.icons_dir, "update.svg"): UPDATE_ICON,
-            os.path.join(self.icons_dir, "menu.svg"): MENU_ICON,
-            os.path.join(self.icons_dir, "customization.svg"): CUSTOMIZATION_ICON
-        }
-        
         button = QPushButton(text)
         button.setFixedHeight(height)
         if icon:
-            button.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(icon_map[icon].encode()))))
+            button.setIcon(QIcon(QPixmap(icon)))
         if fixed_width:
             button.setFixedWidth(fixed_width)
         button.clicked.connect(slot)
@@ -250,6 +235,10 @@ class SteamKeyManager(QMainWindow):
         backup_action = QAction("Backup Games", self)
         backup_action.triggered.connect(self.manual_game_data_backup)
         menu.addAction(backup_action)
+
+        manage_categories_action = QAction("Manage Categories", self)
+        manage_categories_action.triggered.connect(self.open_category_manager)
+        menu.addAction(manage_categories_action)
 
         pos = self.hamburger_menu_button.mapToGlobal(QPoint(0, self.hamburger_menu_button.height()))
         pos.setX(pos.x() - menu.sizeHint().width() + self.hamburger_menu_button.width() + 1)
@@ -312,22 +301,23 @@ class SteamKeyManager(QMainWindow):
     
     def open_color_config_dialog(self):
         self.toggle_theme_checkbox.setChecked(True)
-        dialog = ColorConfigDialog(self, self.custom_colors, self.theme, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
+        dialog = ColorConfigDialog(self, self.custom_colors, self.theme, self.border_radius, self.border_size, self.border_size_interactables, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
         if dialog.exec() == QDialog.Accepted:
             self.custom_colors = dialog.current_colors
             self.using_custom_colors = True
             self.border_radius = dialog.border_radius
             self.border_size = dialog.border_size
+            self.border_size_interactables = dialog.border_size_interactables
             self.checkbox_radius = dialog.checkbox_radius
             self.scrollbar_width = dialog.scrollbar_width
             self.scroll_radius = dialog.scroll_radius
-            self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
+            self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.border_size_interactables, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
             self.save_config()
 
     def toggle_default_theme(self):
         self.theme = "dark" if self.theme_switch.isChecked() else "light"
         if self.using_custom_colors:
-            self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
+            self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.border_size_interactables, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
         else:
             self.apply_theme(self.theme)
         self.save_config()
@@ -335,7 +325,7 @@ class SteamKeyManager(QMainWindow):
     def toggle_custom_theme(self):
         self.using_custom_colors = self.toggle_theme_checkbox.isChecked()
         if self.using_custom_colors:
-            self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
+            self.apply_custom_colors(self.custom_colors, self.border_radius, self.border_size, self.border_size_interactables, self.checkbox_radius, self.scroll_radius, self.scrollbar_width)
         else:
             self.apply_theme(self.theme)
         self.save_config()
@@ -344,8 +334,8 @@ class SteamKeyManager(QMainWindow):
         theme = Theme(theme=theme)
         self.setStyleSheet(theme.generate_stylesheet())
 
-    def apply_custom_colors(self, colors, border_radius, border_size, checkbox_radius, scroll_radius, scrollbar_width):
-        theme = Theme(theme=self.theme, custom_colors=colors, border_radius=border_radius, border_size=border_size, checkbox_radius=checkbox_radius, scroll_radius=scroll_radius, scrollbar_width=scrollbar_width)
+    def apply_custom_colors(self, colors, border_radius, border_size, border_size_interactables, checkbox_radius, scroll_radius, scrollbar_width):
+        theme = Theme(theme=self.theme, custom_colors=colors, border_radius=border_radius, border_size=border_size, border_size_interactables=border_size_interactables, checkbox_radius=checkbox_radius, scroll_radius=scroll_radius, scrollbar_width=scrollbar_width)
         self.setStyleSheet(theme.generate_stylesheet())
     
     def censor_key(self, key):
@@ -507,61 +497,30 @@ class SteamKeyManager(QMainWindow):
     def import_games(self):
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        file_dialog.setNameFilter("JSON Files (*.json)")
+        file_dialog.setNameFilter("JSON Files (*.json);;Text Files (*.txt)")
         
         if file_dialog.exec():
             file_paths = file_dialog.selectedFiles()
             if file_paths:
                 import_file = Path(file_paths[0])
                 try:
-                    self.merge_imported_games(import_file)
+                    if import_file.suffix.lower() == '.json':
+                        added_count, added_titles = merge_imported_games_from_json(import_file, self.games, self.categories)
+                    elif import_file.suffix.lower() == '.txt':
+                        added_count, added_titles = merge_imported_games_from_txt(import_file, self.games, self.categories)
+                    else:
+                        QMessageBox.warning(self, "Error", "Unsupported file type.")
+                    
+                    if added_count > 0:
+                        added_titles_str = ", ".join(added_titles)
+                        self.save_key_data()
+                        self.refresh_game_list()
+                        QMessageBox.information(self, "Success", f"Successfully imported {added_count} game(s): {added_titles_str}")
+                    else:
+                        QMessageBox.information(self, "Error", f"Didn't find any new games to import")
+                
                 except Exception as e:
                     QMessageBox.warning(self, "Error", f"Failed to import games: {str(e)}")
-
-    def merge_imported_games(self, import_file):
-        try:
-            with open(import_file, 'r') as file:
-                imported_data = json.load(file)
-            
-            added_count = [0]
-            added_titles = []
-            new_categories = set()
-
-            def add_game(title, code, category):
-                if category and category not in self.categories:
-                    new_categories.add(category)
-                if title and code and not any(game["key"] == code for game in self.games.values()):
-                    unique_id = str(uuid.uuid4())
-                    self.games[unique_id] = {"title": title, "key": code, "category": category if category in self.categories else "New"}
-                    added_count[0] += 1
-                    added_titles.append(title)
-
-            if isinstance(imported_data, list):
-                for game in imported_data:
-                    add_game(game.get("title"), game.get("code"), game.get("category", "New"))
-            elif isinstance(imported_data, dict):
-                for game in imported_data.values():
-                    add_game(game.get("title"), game.get("key"), game.get("category", "New"))
-            
-            # Add new categories found in import
-            if new_categories:
-                self.categories.extend(list(new_categories))
-                self.config["categories"] = self.categories
-                save_config(self.config)
-                self.category_filter.clear()
-                self.category_filter.addItem("All Categories")
-                self.category_filter.addItems(self.categories)
-            
-            if added_count[0] > 0:
-                added_titles_str = ", ".join(added_titles)
-                self.save_key_data()
-                self.refresh_game_list()
-                QMessageBox.information(self, "Success", f"Successfully imported {added_count[0]} game(s): {added_titles_str}")
-            else:
-                QMessageBox.information(self, "Error", f"Didn't find any new games to import")
-
-        except Exception as e:
-            QMessageBox.warning(self, "Error", f"Failed to import games: {str(e)}")
 
     def manual_game_data_backup(self):
         options = QFileDialog.Options()
@@ -602,6 +561,7 @@ class SteamKeyManager(QMainWindow):
             "custom_colors": self.custom_colors,
             "border_radius": self.border_radius,
             "border_size": self.border_size,
+            "border_size_interactables": self.border_size_interactables,
             "checkbox_radius": self.checkbox_radius,
             "scrollbar_width": self.scrollbar_width,
             "scroll_radius": self.scroll_radius

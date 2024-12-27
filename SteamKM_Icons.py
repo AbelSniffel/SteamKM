@@ -18,3 +18,14 @@ DOWN_ARROW_ICON = '''<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG
 <path d="M78.466 35.559L50.15 63.633L22.078 35.317c-0.777-0.785-2.044-0.789-2.828-0.012s-0.789 2.044-0.012 2.827L48.432 67.58c0.365 0.368 0.835 0.563 1.312 0.589c0.139 0.008 0.278-0.001 0.415-0.021c0.054 0.008 0.106 0.021 0.16 0.022c0.544 0.029 1.099-0.162 1.515-0.576l29.447-29.196c0.785-0.777 0.79-2.043 0.012-2.828S79.249 34.781 78.466 35.559z"/>
 </svg>
 '''
+
+def change_icon_color(icon_svg, color):
+    icon_svg = icon_svg.replace('fill="#000000"', f'fill="{color}"')
+    icon_svg = icon_svg.replace('stroke="#000000"', f'stroke="{color}"')
+    return icon_svg
+
+# Usage example:
+UPDATE_ICON = change_icon_color(UPDATE_ICON, "#FF0000")  # Change to red
+MENU_ICON = change_icon_color(MENU_ICON, "#00FF00")    # Change to green
+CUSTOMIZATION_ICON = change_icon_color(CUSTOMIZATION_ICON, "#0000FF")  # Change to blue
+DOWN_ARROW_ICON = change_icon_color(DOWN_ARROW_ICON, "#FFFF00")  # Change to yellow

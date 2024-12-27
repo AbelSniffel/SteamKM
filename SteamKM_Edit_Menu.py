@@ -6,7 +6,7 @@ from SteamKM_Config import load_config
 class EditGameDialog(QDialog):
     def __init__(self, parent=None, games=None):
         super().__init__(parent)
-        self.setWindowTitle("Edit Games")
+        self.setWindowTitle("Edit Games Menu")
         self.resize(400, 350)
         self.games = games if games else []
         self.categories = load_config().get("categories", ["Premium", "Good", "Low Effort", "Bad", "VR", "Used", "New"])
