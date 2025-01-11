@@ -1,3 +1,23 @@
+0.6.0-beta
++ New Moveable Function Dock which houses various buttons
++ Categories menu (able to add, edit or remove categories)
++ Added a slider for controlling the interactables border size
++ Support for importing txt files
++ New indicator number inside the Edit menu
++ Added the text "Checking for Updates" to the main GUI
++ Icons are theme sensitive (controlled by the text color)
++ Dynamic "hover" and "pressed" state colors for buttons
+* Update Available text is now branch sensitive
+* Slight improvements to the Search bar
+* Made the text "(latest)" be permanently attached to newest available version
+* Made the boxes inside the Edit menu stick to the top
+* Edit menu boxes now have a fixed vertical size
+* Halved the drop-down menu border radius
+* Reorganized Customization menu
+* Some other small changes and bug fixes
+- Removed Github token requirement for Alpha Builds
+- Removed customizable button hover and pressed colors
+
 0.5.1-beta
 + Added version selector to choose which version to install
 + Added download time estimation
