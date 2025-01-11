@@ -6,7 +6,7 @@ SteamKM (Steam Key Manager) is a hobby project which resolves my own duplicate k
 - **Easy Editing**: Made a mistake? Right-click any entry to edit titles, keys, or categories instantly.
 - **Customizable Interface**: Tailor your experience with responsive UI design, included light/dark modes, and theme customization.
 
-| ![Image 1](https://github.com/user-attachments/assets/f78a44f6-3084-486f-9188-73ec56e1445f) | ![Image 2](https://github.com/user-attachments/assets/e5f5cd4f-be78-4770-bcd0-e1f61670159a) |
+| ![Image 1](https://github.com/user-attachments/assets/b8b8b4d7-1e11-491d-9808-5226db6d0466) | ![Image 2](https://github.com/user-attachments/assets/ccc8cd31-5b17-447d-8780-cc8a9f024d0e) |
 | --- | --- |
 | ![Image 3](https://github.com/user-attachments/assets/1ccf98ba-3fc5-42c8-a8bd-58a00b35f031) | ![Image 4](https://github.com/user-attachments/assets/df66ed62-d8a4-4b34-9267-210f05df7be4) | 
 | --- | --- |
