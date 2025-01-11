@@ -1,15 +1,17 @@
 # SteamKM_Updater.py
-from PySide6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QLabel, QComboBox, QPushButton, QProgressBar, QTextEdit, QApplication, QGroupBox, QHBoxLayout
-from PySide6.QtCore import Qt, QThread, Signal, QTimer
-from SteamKM_Version import CURRENT_BUILD
-from packaging.version import parse, InvalidVersion
-from time import time
 import requests
 import os
 import sys
 import logging
 import subprocess
+from time import time
+from PySide6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QLabel, QComboBox, QPushButton, QProgressBar, QTextEdit, QApplication, QGroupBox, QHBoxLayout
+from PySide6.QtCore import Qt, QThread, Signal, QTimer
+from SteamKM_Version import CURRENT_BUILD
 from SteamKM_Config import load_config, save_config
+from packaging.version import parse, InvalidVersion
+
+URL = "https://api.github.com/repos/AbelSniffel/SteamKM/releases"
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -20,14 +22,23 @@ except ImportError:
     GITHUB_TOKEN = None
     logging.debug("GitHub token not found. Using unauthenticated requests.")
 
-def check_for_updates(branch="Beta"):
+def check_for_updates(config=None): # NEED TO MAKE THIS NOT A CRUCIAL PART SO THAT THE PROGRAM IS FUNCTIONAL EVEN IF THE UPDATE CHECK FAILS
+    if config is None:
+        config = load_config()
+    
+    selected_branch = config.get("selected_branch", "Beta")
     headers = {"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN else {}
+    
     try:
-        response = requests.get(f"https://api.github.com/repos/AbelSniffel/SteamKM/releases/latest", headers=headers)
+        response = requests.get(f"{URL}/latest", headers=headers)
         response.raise_for_status()
         latest_version = response.json().get("tag_name", "0.0.0")
         logging.debug(f"Latest version from GitHub: {latest_version}")
-        return latest_version if parse(latest_version) > parse(CURRENT_BUILD) else CURRENT_BUILD
+        
+        if selected_branch in latest_version:
+            return latest_version if parse(latest_version) > parse(CURRENT_BUILD) else CURRENT_BUILD
+        return CURRENT_BUILD
+        
     except Exception as e:
         logging.error(f"Error checking for updates: {e}")
         QMessageBox.critical(None, "Update Error", str(e))
@@ -36,7 +47,7 @@ def check_for_updates(branch="Beta"):
 def download_update(latest_version, progress_callback):
     headers = {"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN else {}
     try:
-        release_url = f"https://api.github.com/repos/AbelSniffel/SteamKM/releases/tags/{latest_version}"
+        release_url = f"{URL}/tags/{latest_version}"
         response = requests.get(release_url, headers=headers)
         response.raise_for_status()
         assets = response.json().get("assets", [])
@@ -67,7 +78,7 @@ def download_update(latest_version, progress_callback):
         logging.error(f"Failed to download update: {e}")
         raise e
 
-class UpdateManager:
+class UpdateManager: # This is triggered from the main script for automatic startup update check
     def __init__(self, parent=None, current_version=CURRENT_BUILD):
         self.parent = parent
         self.cleanup_old_files()
@@ -75,16 +86,15 @@ class UpdateManager:
         self.update_check_thread = UpdateCheckThread()
         self.update_check_thread.update_available.connect(self.on_update_available)
         self.update_check_thread.finished.connect(self.update_check_thread.deleteLater)
-        QTimer.singleShot(100, self.start_update_check)
+        QTimer.singleShot(1000, self.start_update_check)
 
     def start_update_check(self):
         self.update_check_thread.start()
 
     def on_update_available(self, available):
-        if available:
-            update_available_label = self.parent.findChild(QLabel, "update_available_label")
-            if update_available_label:
-                update_available_label.setVisible(True)
+        update_available_label = self.parent.findChild(QLabel, "update_available_label")
+        update_available_label.setText("Update Available")
+        update_available_label.setVisible(available)
 
     def cleanup_old_files(self):
         backup_file = os.path.realpath(sys.executable) + ".bak"
@@ -133,7 +143,7 @@ class DownloadThread(QThread):
 class UpdateDialog(QDialog):
     def __init__(self, parent=None, current_version=CURRENT_BUILD):
         super().__init__(parent)
-        self.setWindowTitle("Update Manager")
+        self.setWindowTitle("Update Menu")
         self.resize(480, 600)
         self.current_version = current_version
         self.latest_version = None
@@ -167,9 +177,7 @@ class UpdateDialog(QDialog):
         version_layout.addWidget(select_branch_label, alignment=Qt.AlignRight)
 
         self.branch_combo = QComboBox(fixedWidth=65)
-        self.branch_combo.addItems(["Stable", "Beta"])
-        if GITHUB_TOKEN:
-            self.branch_combo.addItem("Alpha")
+        self.branch_combo.addItems(["Stable", "Beta", "Alpha"])
         self.branch_combo.currentIndexChanged.connect(self.on_branch_changed)
         version_layout.addWidget(self.branch_combo)
 
@@ -183,14 +191,14 @@ class UpdateDialog(QDialog):
 
         button_layout = QHBoxLayout()
         self.check_updates_button = QPushButton("Check", fixedWidth=75)
-        self.check_updates_button.clicked.connect(self.fetch_releases)
+        self.check_updates_button.clicked.connect(self.manual_update_check)
         button_layout.addWidget(self.check_updates_button)
 
         self.download_button = QPushButton("Download", visible=False)
         self.download_button.clicked.connect(self.start_download)
         button_layout.addWidget(self.download_button)
         
-        self.version_combo = QComboBox(fixedWidth=122, visible=False)
+        self.version_combo = QComboBox(fixedWidth=130, visible=False)
         self.version_combo.currentIndexChanged.connect(self.on_version_selected)
         button_layout.addWidget(self.version_combo)
 
@@ -227,7 +235,7 @@ class UpdateDialog(QDialog):
         branch = self.branch_combo.currentText().lower()
 
         if not self.initializing:
-            self.update_label.setText("Loading...")
+            self.update_label.setText("Loading New Branch...")
             
             try:
                 config = load_config()
@@ -237,6 +245,10 @@ class UpdateDialog(QDialog):
                 logging.error(f"Failed to save config: {e}")
 
             QTimer.singleShot(100, self.fetch_releases)
+
+    def manual_update_check(self):
+        self.update_label.setText("Searching for Updates...")
+        QTimer.singleShot(100, self.fetch_releases)
 
     def fetch_releases(self):
         branch = self.branch_combo.currentText().lower()
@@ -262,7 +274,7 @@ class UpdateDialog(QDialog):
             if versions:
                 for version in versions:
                     item_text = version
-                    if version == latest_version and parse(version) > local_version:
+                    if version == latest_version:
                         item_text = f"{version} (latest)"
                     self.version_combo.addItem(item_text)
                 self.download_button.setVisible(True)
@@ -276,7 +288,7 @@ class UpdateDialog(QDialog):
 
             if latest_version and local_version >= parse(latest_version):
                 self.update_label.setText("You're already on the latest build.")
-                self.version_combo.setFixedWidth(85)
+                self.version_combo.setFixedWidth(130)
                 return
             self.update_label.setText("Select a version to download.")
         except Exception as e:
@@ -285,7 +297,7 @@ class UpdateDialog(QDialog):
 
     def fetch_changelog(self):
         try:
-            response = requests.get(f"https://raw.githubusercontent.com/AbelSniffel/SteamKM/Beta/CHANGELOG.md")
+            response = requests.get(f"https://raw.githubusercontent.com/AbelSniffel/SteamKM/main/CHANGELOG.md")
             if response.status_code == 200:
                 changelog_text = response.text
                 lines = changelog_text.split('\n')
