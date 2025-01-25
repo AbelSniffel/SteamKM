@@ -1,3 +1,32 @@
+0.7.0-beta (Upcoming Update - Still in development)
+Security & Encryption:
++ Implemented SHA-256 encryption for Steam Keys file
++ Added GUI option to change encryption password
+
+Backups & Data Management:
+* More options for Steam Key data backups
+* More options for importing Steam Key data
+* Potentially improved speed of adding large numbers of games
+* Improved and fixed TXT file importing
+
+UI/UX Improvements:
++ Added search bar to Theme Customization Menu
++ Added group box color customization
++ Added selected branch name to "No updates available" message
++ Dynamic text for download button, changing based on selected version
++ Dynamic "Show/Hide" text for Toggle All Keys
++ Dynamic hover color for comboboxes
++ Unified Theme Customization elements within a single border
++ Real-time updates for "Update Available" text in Update Menu
+* Improved Update menu
+* Halved corner radius for items inside border groups
+* Slightly rounder default corner radius
+* Fixed scrollbar corner visual bug
+* Disabled editing/removing the "New" category
+- Removed redundant "(latest)" text
+- Removed combobox hover/dropdown background customization
+- Removed restart script (exploring alternatives for future)
+
 0.6.0-beta
 + New Moveable Function Dock which houses various buttons
 + Categories menu (able to add, edit or remove categories)
