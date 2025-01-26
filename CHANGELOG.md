@@ -10,18 +10,22 @@ Backups & Data Management:
 * Improved and fixed TXT file importing
 
 UI/UX Improvements:
++ Added 2 new themes called "Ocean" and "Forest"
 + Added search bar to Theme Customization Menu
-+ Added group box color customization
++ Added customizable grouped items background color
++ Added customizable changelog background color
 + Added selected branch name to "No updates available" message
 + Dynamic text for download button, changing based on selected version
 + Dynamic "Show/Hide" text for Toggle All Keys
 + Dynamic hover color for comboboxes
 + Unified Theme Customization elements within a single border
 + Real-time updates for "Update Available" text in Update Menu
-* Improved Update menu
+* Fixed scrollbar corner visual bug
+* Reorganized color customization groups
+* Encased categories into a group (Manage Categories menu)
+* Changed the Dark Mode checkbox into a dropdown menu
 * Halved corner radius for items inside border groups
 * Slightly rounder default corner radius
-* Fixed scrollbar corner visual bug
 * Disabled editing/removing the "New" category
 - Removed redundant "(latest)" text
 - Removed combobox hover/dropdown background customization
