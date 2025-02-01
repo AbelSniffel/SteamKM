@@ -14,21 +14,25 @@ UI/UX Improvements:
 + Added search bar to Theme Customization Menu
 + Added customizable grouped items background color
 + Added customizable changelog background color
++ Improved visuals for Game Table/List
 + Added selected branch name to "No updates available" message
 + Dynamic text for download button, changing based on selected version
 + Dynamic "Show/Hide" text for Toggle All Keys
 + Dynamic hover color for comboboxes
-+ Unified Theme Customization elements within a single border
++ Grouped Theme Customization elements within a single border
 + Real-time updates for "Update Available" text in Update Menu
+* Changed the Dark Mode checkbox into a dropdown menu
+* Game Table corner button is now affected by button color
 * Fixed scrollbar corner visual bug
+* Tweaked the default themes a bit
 * Reorganized color customization groups
 * Encased categories into a group (Manage Categories menu)
-* Changed the Dark Mode checkbox into a dropdown menu
 * Halved corner radius for items inside border groups
-* Slightly rounder default corner radius
-* Disabled editing/removing the "New" category
-- Removed redundant "(latest)" text
-- Removed combobox hover/dropdown background customization
+* Slightly rounder default corners
+* Disabled editing & removal for the "New" category
+- Removed "(latest)" text
+- Removed combobox hover & dropdown background customization
+- Removed combobox dropdown menu border
 - Removed restart script (exploring alternatives for future)
 
 0.6.0-beta
