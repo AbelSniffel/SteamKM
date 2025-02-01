@@ -7,7 +7,7 @@ Backups & Data Management:
 * More options for Steam Key data backups
 * More options for importing Steam Key data
 * Potentially improved speed of adding large numbers of games
-* Improved and fixed TXT file importing
+* Improved TXT file import
 
 UI/UX Improvements:
 + Added 2 new themes called "Ocean" and "Forest"
@@ -23,28 +23,35 @@ UI/UX Improvements:
 + Real-time updates for "Update Available" text in Update Menu
 * Changed the Dark Mode checkbox into a dropdown menu
 * Game Table corner button is now affected by button color
-* Fixed scrollbar corner visual bug
 * Tweaked the default themes a bit
 * Reorganized color customization groups
 * Encased categories into a group (Manage Categories menu)
 * Halved corner radius for items inside border groups
 * Slightly rounder default corners
 * Disabled editing & removal for the "New" category
+
+Bug Fixes:
+* Fixed scrollbar corner visual bug
+
+Removals:
 - Removed "(latest)" text
 - Removed combobox hover & dropdown background customization
 - Removed combobox dropdown menu border
 - Removed restart script (exploring alternatives for future)
 
 0.6.0-beta
+Data Management:
++ Added support for importing txt files
+
+UI/UX Improvements:
 + New Moveable Function Dock which houses various buttons
 + Categories menu (able to add, edit or remove categories)
 + Added a slider for controlling the interactables border size
-+ Support for importing txt files
 + New indicator number inside the Edit menu
 + Added the text "Checking for Updates" to the main GUI
 + Icons are theme sensitive (controlled by the text color)
 + Dynamic "hover" and "pressed" state colors for buttons
-* Update Available text is now branch sensitive
++ Update Available text is now branch sensitive
 * Slight improvements to the Search bar
 * Made the text "(latest)" be permanently attached to newest available version
 * Made the boxes inside the Edit menu stick to the top
@@ -52,31 +59,38 @@ UI/UX Improvements:
 * Halved the drop-down menu border radius
 * Reorganized Customization menu
 * Some other small changes and bug fixes
+
+Removals:
 - Removed Github token requirement for Alpha Builds
 - Removed customizable button hover and pressed colors
 
 0.5.1-beta
+UI/UX Improvements:
 + Added version selector to choose which version to install
 + Added download time estimation
 + Added download cancellation button
-+ Added popup which opens after a successful update
 + New automatic update checker which doesn't freeze the GUI
++ Added a popup which opens after a successful update
 + Scroll wheel rejection for the Edit Menu, scroll with confidence without accidentally changing game categories
 * Tweaked the color customization menu style
 * Tweaked the default themes a bit
 * Changed the size of the checkboxes
 * Changed the Update menu layout
-- Removed Rich Text support from Add games field, this resolves 
-styling issues that appear when copying from stylized places (like websites)
+
+Removals:
+- Removed Rich Text support from Add games field, this resolves styling issues that appear when copying from stylized places (like websites)
 - Removed text "Game 1, Game 2, etc." from the Edit menu
 
 0.4.5-beta
+UI/UX Improvements:
 + Added themed download bar
 * Tweaked the GUI a bit
 
 0.4.4-beta
+UI/UX Improvements:
 + Added Update menu
 - Removed Automatic Update Checking for now
 
 0.4.0-beta
+Bug Fixes:
 * Fixed Updater
