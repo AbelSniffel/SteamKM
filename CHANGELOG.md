@@ -39,6 +39,7 @@ Removals:
 - Removed combobox dropdown menu border
 - Removed restart script (exploring alternatives for future)
 
+
 0.6.0-beta
 Data Management:
 + Added support for importing txt files
@@ -64,6 +65,7 @@ Removals:
 - Removed Github token requirement for Alpha Builds
 - Removed customizable button hover and pressed colors
 
+
 0.5.1-beta
 UI/UX Improvements:
 + Added version selector to choose which version to install
@@ -81,15 +83,18 @@ Removals:
 - Removed Rich Text support from Add games field, this resolves styling issues that appear when copying from stylized places (like websites)
 - Removed text "Game 1, Game 2, etc." from the Edit menu
 
+
 0.4.5-beta
 UI/UX Improvements:
 + Added themed download bar
 * Tweaked the GUI a bit
 
+
 0.4.4-beta
 UI/UX Improvements:
 + Added Update menu
 - Removed Automatic Update Checking for now
+
 
 0.4.0-beta
 Bug Fixes:
