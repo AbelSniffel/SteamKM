@@ -39,7 +39,7 @@ Removals:
 - Removed combobox dropdown menu border
 - Removed restart script (exploring alternatives for future)
 
-~.~.~.~.~
+
 0.6.0-beta
 Data Management:
 + Added support for importing txt files
