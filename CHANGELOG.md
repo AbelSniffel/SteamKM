@@ -1,14 +1,3 @@
-Future problems/ideas
-~ Need to dynamically calculate the game table grid
-~ Need to make dynamic color take into account how much brighter or darker hover and pressed colors have to get and if those calculated colors will hit pure white or black value (aka it hits the cap before it actually gets to it's "appropriate" color), which means that the color difference between the 3 states (just the color, hover and pressed) is too low.
-~ Need to make the buttons height lower for other elements which are not part of the main window (like popup messages: Change password)
-~ Need to fix the starting progress bar chunck to be appropriately rounded and not a square (Need to check if it's fixed now)
-~ Need to somehow remove the drop shadow behind stuff like QComboBox and QMenu
-~ Add caching for the update part (automatic update should cache the info for the Update menu) - CURRENTLY WORKING ON IT
-~ Maybe add little icon for default themes selection which lights up to indicate the selected theme 
-(Dark,Light,Forest,Ocean - all icons are perfectly connected and flow into each other)
-
-
 0.7.0-beta (Upcoming Update - Still in development)
 Security & Encryption:
 + Implemented SHA-256 encryption for Steam Keys file
