@@ -1,35 +1,43 @@
-0.7.0-beta (Upcoming Update - Still in development)
+0.8.0-beta (In Development) # Skipping 0.7.0
 Security & Encryption:
 + Implemented SHA-256 encryption for Steam Keys file
 + Added GUI option to change encryption password
 
 Backups & Data Management:
-* More options for Steam Key data backups
-* More options for importing Steam Key data
++ More options for Steam Key data backups
++ More options for importing Steam Key data
++ New unified auto correction system for adding games & file importing (TXT)
 * Potentially improved speed of adding large numbers of games
-* Improved TXT file import
 
 UI/UX Improvements:
 + Added 2 new themes called "Ocean" and "Forest"
 + Added search bar to Theme Customization Menu
 + Added customizable grouped elements background color
 + Added customizable changelog background color
-+ Improved visuals for Game Table/List
++ Added Discord spoiler style copy option
 + Added selected branch name to "No updates available" message
++ Added a new message "Restart required" after downloading update
++ Improved visuals for Game Table/List
++ Real-time status message updates for Update Menu and Main GUI
++ Version selector combobox width is controlled by the branch
 + Dynamic text for download button, changing based on selected version
 + Dynamic "Show/Hide" text for Toggle All Keys
 + Dynamic hover color for comboboxes
 + Grouped theme customization elements together
 + Grouped category customization elements together
-+ Real-time updates for "Update Available" text in Update Menu
-* Changed the Dark Mode checkbox into a dropdown menu
-* Game Table corner button is now affected by button color
-* Tweaked the default themes a bit
++ Combobox dropdown color is now themed
 * Reorganized color customization groups
+* Tweaked the default themes a bit
+* Slightly rounder default corners
+* Changed the Dark Mode checkbox into a dropdown menu
+* Created a gap between the combobox and it's dropdown menu
+* Game Table corner button is now affected by button color
 * Encased categories into a group (Manage Categories menu)
 * Halved corner radius for items inside border groups
-* Slightly rounder default corners
+* Changed the default dock position to be on the top
+* Increased scrollbar customization range
 * Disabled editing & removal for the "New" category
+* Changed Stable branch into Release branch
 
 Bug Fixes:
 * Fixed scrollbar corner visual bug
@@ -39,6 +47,7 @@ Removals:
 - Removed combobox hover & dropdown background customization
 - Removed combobox dropdown menu border
 - Removed restart script (exploring alternatives for future)
+- Removed Alpha branch as I don't plan to use it for releases
 
 ___
 0.6.0-beta
@@ -60,7 +69,10 @@ UI/UX Improvements:
 * Edit menu boxes now have a fixed vertical size
 * Halved the drop-down menu border radius
 * Reorganized Customization menu
-* Some other small changes and bug fixes
+* Some other small changes
+
+Bug Fixes:
+* I don't remember which bugs :/
 
 Removals:
 - Removed Github token requirement for Alpha Builds
