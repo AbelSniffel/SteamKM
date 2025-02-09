@@ -40,7 +40,7 @@ UI/UX Improvements:
 * Changed Stable branch into Release branch
 
 Bug Fixes:
-* Fixed scrollbar corner visual bug
+* Finally fixed scrollbar corner visual bug
 
 Removals:
 - Removed "(latest)" text
