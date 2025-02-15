@@ -1,4 +1,4 @@
-0.8.0-beta (In Development) # Skipping 0.7.0
+0.8.0-beta
 Security & Encryption:
 + Implemented SHA-256 encryption for Steam Keys file
 + Added GUI option to change encryption password
@@ -6,8 +6,7 @@ Security & Encryption:
 Backups & Data Management:
 + More options for Steam Key data backups
 + More options for importing Steam Key data
-+ New unified auto correction system for adding games & file importing (TXT)
-* Potentially improved speed of adding large numbers of games
++ New auto correction system for adding games & file importing (TXT)
 
 UI/UX Improvements:
 + Added 2 new themes called "Ocean" and "Forest"
@@ -17,6 +16,7 @@ UI/UX Improvements:
 + Added Discord spoiler style copy option
 + Added selected branch name to "No updates available" message
 + Added a new message "Restart required" after downloading update
++ Added confirmation message when trying to close Update Menu with an active download
 + Improved visuals for Game Table/List
 + Real-time status message updates for Update Menu and Main GUI
 + Version selector combobox width is controlled by the branch
@@ -26,9 +26,12 @@ UI/UX Improvements:
 + Grouped theme customization elements together
 + Grouped category customization elements together
 + Combobox dropdown color is now themed
++ Added scroll wheel rejection for the Theme Customization Menu sliders
+* Changed most of the color names to make it easier to search
 * Reorganized color customization groups
 * Tweaked the default themes a bit
 * Slightly rounder default corners
+* Progress bar radius is now controlled by Corner Radius
 * Changed the Dark Mode checkbox into a dropdown menu
 * Created a gap between the combobox and it's dropdown menu
 * Game Table corner button is now affected by button color
@@ -41,6 +44,7 @@ UI/UX Improvements:
 
 Bug Fixes:
 * Finally fixed scrollbar corner visual bug
+* In progress download will now stop when closing Update Menu
 
 Removals:
 - Removed "(latest)" text
@@ -86,7 +90,7 @@ UI/UX Improvements:
 + Added download cancellation button
 + New automatic update checker which doesn't freeze the GUI
 + Added a popup which opens after a successful update
-+ Scroll wheel rejection for the Edit Menu, scroll with confidence without accidentally changing game categories
++ Added Scroll wheel rejection for the Edit Menu, scroll with confidence without accidentally changing game categories
 * Tweaked the color customization menu style
 * Tweaked the default themes a bit
 * Changed the size of the checkboxes
