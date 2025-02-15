@@ -13,7 +13,7 @@ class CategoryManagerDialog(QDialog):
         self.categories = categories.copy()
         self.category_map = {}  # Maps old category names to new ones
         self.setup_ui()
-        self.resize(350, 420)
+        self.resize(350, 435)
 
     def setup_ui(self):
         self.setWindowTitle("Manage Categories")
