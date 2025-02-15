@@ -1,18 +1,12 @@
 ### Do you have excess amount of duplicate Steam keys? Fear not, as this program was made for you and me!
 SteamKM (Steam Key Manager) is a hobby project which resolves my own duplicate key problem, you can even cry at the amount of duplicate keys thanks to the built-in key counter 😿. 
 
-### Why Choose SteamKM?
+### Why Use SteamKM?
 - **Effortless Game Key Management**: Quickly organize, search, and categorize your Steam keys.
 - **Easy Editing**: Made a mistake? Right-click any entry to edit titles, keys, or categories instantly.
-- **Customizable Interface**: Tailor your experience with responsive UI design, included light/dark modes, and theme customization.
+- **Customizable Interface**: Tailor your experience with responsive UI design, comes with multiple default themes, which are customizable by you.
 
-| ![Image 1](https://github.com/user-attachments/assets/b8b8b4d7-1e11-491d-9808-5226db6d0466) | ![Image 2](https://github.com/user-attachments/assets/ccc8cd31-5b17-447d-8780-cc8a9f024d0e) |
-| --- | --- |
-| ![Image 3](https://github.com/user-attachments/assets/1ccf98ba-3fc5-42c8-a8bd-58a00b35f031) | ![Image 4](https://github.com/user-attachments/assets/df66ed62-d8a4-4b34-9267-210f05df7be4) | 
-| --- | --- |
-| ![Image 5](https://github.com/user-attachments/assets/4c4fd3d6-8a46-40ab-8a19-bdcb0870be57) | ![Image 6](https://github.com/user-attachments/assets/a2e3b40c-ea79-49d0-bf97-619b79c363dd) |
-
-### **Key Features:**
+![Dark - Top Dock](https://github.com/user-attachments/assets/442a0dc3-9c70-4de7-937f-4917cbd80503)
 
 ### **UI & Customization**
 - Modern, Responsive Design (Using PySide6): A clean and intuitive interface for seamless navigation.
@@ -25,6 +19,7 @@ SteamKM (Steam Key Manager) is a hobby project which resolves my own duplicate k
 - Smart Categorization: Organize games into categories like Premium, Good, Used, and more.
 
 ### **Data Security & Management**
+- SHA-256 Encryption: Keep your keys safe
 - Hidden Keys: All saved and just added keys are automatically hidden by default.
 - Backups: Automatic and manual backup options to safeguard your data.
 - Import/Export Functionality: Transfer your library between devices effortlessly.
@@ -36,4 +31,17 @@ SteamKM (Steam Key Manager) is a hobby project which resolves my own duplicate k
 
 ### **System Features**
 - Automatic Updates: Stay up to date with built-in update checking and the ability to choose the specific version which to download.
-- Cross-Platform Compatibility: Built with PySide6 and Python for Windows and Linux users.
+- Cross-Platform Compatibility: Built with PySide6 and Python for Windows and Linux users. (Linux is WIP but usable in its current form)
+
+
+### **Additional Pictures**
+
+Dark Theme (Dock on the bottom) | Light Theme
+:-------------------------:|:-------------------------:
+| ![Dark - Bottom Dock](https://github.com/user-attachments/assets/ada35eec-9351-4480-bf19-6218e80c574d) | ![Light](https://github.com/user-attachments/assets/d668aac3-51c6-4fc9-b2ff-7ecbd797e821) |
+Ocean Theme | Forest Theme
+| ![Ocean](https://github.com/user-attachments/assets/24e030cf-cda1-4312-8d19-5772a5f80561) | ![Forest](https://github.com/user-attachments/assets/d52924ea-2c8a-4ef0-84b4-9e5e608782d2) |
+Update Menu | Theme Customization Menu
+| ![Update](https://github.com/user-attachments/assets/2493b857-b407-430b-8d07-8983d2abd7f0) | ![Theme](https://github.com/user-attachments/assets/94cf55ca-0c26-4315-960b-31aef760c065) |
+Categrogy Manager | Edit Added Games
+| ![Category](https://github.com/user-attachments/assets/8d0ba71b-3870-47ab-ada4-94cd0ff26dab) | ![GamesEdit](https://github.com/user-attachments/assets/53dbd036-980b-4a0d-b1ea-4a4a6471fe0c) |
