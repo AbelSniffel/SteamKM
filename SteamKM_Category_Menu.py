@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QGroupBox, QScrollArea, QSpacerItem, QSizePolicy, QMessageBox
 )
 from PySide6.QtCore import Qt
-from SteamKM_Themes import BUTTON_HEIGHT, COLOR_RESET_BUTTON_STYLE
+from SteamKM_Themes import BUTTON_HEIGHT
 
 class CategoryManagerDialog(QDialog):
     def __init__(self, categories, parent=None):
@@ -20,15 +20,20 @@ class CategoryManagerDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # Category list
+        category_group = QGroupBox()
+        category_group_layout = QVBoxLayout(category_group)
+
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setContentsMargins(0, 0, 0, 0)
-        self.scroll_layout.setSpacing(5)  # Fixed gap between entries
+        self.scroll_layout.setSpacing(2)  # Fixed gap between entries
         self.scroll_layout.addStretch(1)  # Force entries to the top
         self.scroll_area.setWidget(self.scroll_content)
-        layout.addWidget(self.scroll_area)
+        
+        category_group_layout.addWidget(self.scroll_area)
+        layout.addWidget(category_group)
 
         # Add new category section
         add_layout = QHBoxLayout()
@@ -67,24 +72,25 @@ class CategoryManagerDialog(QDialog):
         count_label = QLabel(f"{self.categories.index(category) + 1}  ")
         count_label.setStyleSheet("font-size: 15px;")
 
-        name_edit = QLineEdit(category)
-        name_edit.setObjectName("CategoryLineEdit")
-        name_edit.setFixedHeight(BUTTON_HEIGHT)
+        name_edit = QLineEdit(category, fixedHeight=BUTTON_HEIGHT)
         name_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         name_edit.editingFinished.connect(partial(self.update_category, category, name_edit))
 
-        delete_btn = QPushButton("X")
-        delete_btn.setObjectName("ResetButton")
-        delete_btn.setFixedSize(BUTTON_HEIGHT + 2, BUTTON_HEIGHT)
-        delete_btn.setStyleSheet(COLOR_RESET_BUTTON_STYLE)
-        delete_btn.clicked.connect(partial(self.delete_category, category))
+        if category != "New":
+            name_edit.setObjectName("CategoryLineEdit")
+        if category == "New":
+            name_edit.setDisabled(True)
 
         hbox = QHBoxLayout()
         hbox.setSpacing(0)
         hbox.setContentsMargins(0, 5, 10, 0)
         hbox.addWidget(count_label)
         hbox.addWidget(name_edit)
-        hbox.addWidget(delete_btn)
+
+        if category != "New":
+            delete_btn = QPushButton("X", objectName="ResetButtonHalf", fixedWidth=BUTTON_HEIGHT+2, fixedHeight=BUTTON_HEIGHT)
+            delete_btn.clicked.connect(partial(self.delete_category, category))
+            hbox.addWidget(delete_btn)
 
         container = QWidget()
         container.setLayout(hbox)

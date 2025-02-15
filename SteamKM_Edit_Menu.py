@@ -1,5 +1,5 @@
 # SteamKM_Edit_Menu.py
-from PySide6.QtWidgets import ( QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QDialog, QFormLayout, QGroupBox, QScrollArea, QSizePolicy, QComboBox )
+from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt
 from SteamKM_Config import load_config
 
@@ -36,13 +36,14 @@ class EditGameDialog(QDialog):
             group_box.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
             form_layout = QFormLayout()
 
-            title_edit = QLineEdit(game["title"])
+            title_edit = QLineEdit(game["title"], objectName="EncasedRadiusHalved")
             form_layout.addRow("Title:", title_edit)
 
-            key_edit = QLineEdit(game["key"])
+            key_edit = QLineEdit(game["key"], objectName="EncasedRadiusHalved")
             form_layout.addRow("Key:", key_edit)
 
-            category_combo = CustomComboBox()
+            category_combo = ScrollRejectionComboBox()
+            category_combo.setObjectName("EncasedRadiusHalved")
             category_combo.addItems(self.categories)
             current_category = game["category"] if game["category"] in self.categories else "New"
             category_combo.setCurrentText(current_category)
@@ -74,7 +75,7 @@ class EditGameDialog(QDialog):
             self.games[idx]["category"] = category_combo.currentText()
         self.accept()
 
-class CustomComboBox(QComboBox):
+class ScrollRejectionComboBox(QComboBox):
     def __init__(self, parent=None):
         super().__init__(parent)
 

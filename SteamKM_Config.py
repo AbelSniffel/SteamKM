@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 
 CONFIG_FILE_PATH = Path("manager_settings.json").resolve()
+DEFAULT_BRANCH = "beta"
 
 def load_config():
     if CONFIG_FILE_PATH.exists():
