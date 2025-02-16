@@ -4,8 +4,8 @@ Security & Encryption:
 + Added GUI option to change encryption password
 
 Backups & Data Management:
-+ More options for Steam Key data backups
-+ More options for importing Steam Key data
++ More options for Steam keys data backups
++ More options for importing Steam keys data
 + New auto correction system for adding games & file importing (TXT)
 
 UI/UX Improvements:
@@ -26,6 +26,7 @@ UI/UX Improvements:
 + Grouped theme customization elements together
 + Grouped category customization elements together
 + Combobox dropdown color is now themed
++ Added more default category options
 + Added scroll wheel rejection for the Theme Customization Menu sliders
 * Changed most of the color names to make it easier to search
 * Reorganized color customization groups
