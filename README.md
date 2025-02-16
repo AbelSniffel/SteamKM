@@ -43,5 +43,5 @@ Ocean Theme | Forest Theme
 | ![Ocean](https://github.com/user-attachments/assets/24e030cf-cda1-4312-8d19-5772a5f80561) | ![Forest](https://github.com/user-attachments/assets/d52924ea-2c8a-4ef0-84b4-9e5e608782d2) |
 Update Menu | Theme Customization Menu
 | ![Update](https://github.com/user-attachments/assets/2493b857-b407-430b-8d07-8983d2abd7f0) | ![Theme](https://github.com/user-attachments/assets/94cf55ca-0c26-4315-960b-31aef760c065) |
-Categrogy Manager | Edit Added Games
+Category Manager | Edit Added Games
 | ![Category](https://github.com/user-attachments/assets/8d0ba71b-3870-47ab-ada4-94cd0ff26dab) | ![GamesEdit](https://github.com/user-attachments/assets/53dbd036-980b-4a0d-b1ea-4a4a6471fe0c) |
