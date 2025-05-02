@@ -1,4 +1,4 @@
-### Update 1.0.0 Coming soon, with tons of changes and a UI overhaul! ###
+### Update 2.0.0, with tons of changes + a UI overhaul! ###
 ---
 ### Do you have excess amount of duplicate Steam keys? Fear not, as this program was made for you and me!
 SteamKM (Steam Key Manager) is a hobby project which resolves my own duplicate key problem, you can even cry at the amount of duplicate keys thanks to the built-in key counter 😿. 
