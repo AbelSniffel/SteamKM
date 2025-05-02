@@ -8,7 +8,7 @@ SteamKM (Steam Key Manager) is a hobby project which resolves my own duplicate k
 - **Easy Editing**: Made a mistake? Right-click any entry to edit titles, keys, or categories instantly.
 - **Customizable Interface**: Tailor your experience with responsive UI design, comes with multiple default themes, which are customizable by you.
 
-![Dark - Top Dock](https://github.com/user-attachments/assets/442a0dc3-9c70-4de7-937f-4917cbd80503)
+![Dark Theme](https://github.com/user-attachments/assets/129d1e3e-880e-4967-9e66-207afc58f7d8)
 
 ### **UI & Customization**
 - Modern, Responsive Design (Using PySide6): A clean and intuitive interface for seamless navigation.
@@ -37,13 +37,14 @@ SteamKM (Steam Key Manager) is a hobby project which resolves my own duplicate k
 
 
 ### **Additional Pictures**
-
-Dark Theme (Dock on the bottom) | Light Theme
+Dark Theme (Alternative UI Layout) | Dark Theme (Unmerged Buttons)
 :-------------------------:|:-------------------------:
-| ![Dark - Bottom Dock](https://github.com/user-attachments/assets/ada35eec-9351-4480-bf19-6218e80c574d) | ![Light](https://github.com/user-attachments/assets/d668aac3-51c6-4fc9-b2ff-7ecbd797e821) |
-Ocean Theme | Forest Theme
-| ![Ocean](https://github.com/user-attachments/assets/24e030cf-cda1-4312-8d19-5772a5f80561) | ![Forest](https://github.com/user-attachments/assets/d52924ea-2c8a-4ef0-84b4-9e5e608782d2) |
+| ![Dark - Alt](https://github.com/user-attachments/assets/11dc21d5-f45e-45c1-a5f3-f9670628f341) | ![Dark - Unmerged](https://github.com/user-attachments/assets/376a0cd0-044d-4a56-b938-0943483e803e) |
+Light | Ocean
+| ![Light](https://github.com/user-attachments/assets/893ef9ca-4dce-487b-ba2b-58156e75ed9b) | ![Ocean](https://github.com/user-attachments/assets/c021df3f-4c3c-4c64-b9d0-50641e0e9994) |
+Forest | Fire
+| ![Forest](https://github.com/user-attachments/assets/31b57677-ef2c-4b65-8bab-fcc1b155df09) | ![Fire](https://github.com/user-attachments/assets/17756c13-859b-47bc-bf8d-64225b20b786) |
 Update Menu | Theme Customization Menu
-| ![Update](https://github.com/user-attachments/assets/2493b857-b407-430b-8d07-8983d2abd7f0) | ![Theme](https://github.com/user-attachments/assets/94cf55ca-0c26-4315-960b-31aef760c065) |
-Category Manager | Edit Added Games
-| ![Category](https://github.com/user-attachments/assets/8d0ba71b-3870-47ab-ada4-94cd0ff26dab) | ![GamesEdit](https://github.com/user-attachments/assets/53dbd036-980b-4a0d-b1ea-4a4a6471fe0c) |
+| ![Update](https://github.com/user-attachments/assets/7cc0a577-5233-4281-9779-d9f606de468d) | ![Theme](https://github.com/user-attachments/assets/fc5cf2e4-df93-4662-8d4a-7e01a71319d4) |
+Category Manager | Edit Games Menu
+| ![Category](https://github.com/user-attachments/assets/e0fad336-0a3f-4d73-b63f-094924fadfab) | ![GamesEdit](https://github.com/user-attachments/assets/6534244c-0e74-4185-baf4-a6e742cf0d0f) |
