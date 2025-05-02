@@ -2,7 +2,7 @@
 * Probably missed a couple things that I changed but oh well, here are the ones that I remember:
 
 Data Management: 
-+ Added options for impording and expording manager settings file
++ Added options for importing and exporting manager settings file
 + Able to open the folder location using the new "Open Folder Location" button (Settings Menu)
 * Game keys file and manager settings files have been moved to "%APPDATA%\Roaming\SteamKM" or "~/.config/SteamKM" (Linux/macOS)
 + Implemented a migration script, which will move all files from the old location to the new one (%APPDATA%)
@@ -34,7 +34,7 @@ Encryption Improvements:
 * Improved the encryption password changing interface
 
 UI/UX Improvements:
-+ Brand new redesigned UI with enchanced functionality
++ Brand new redesigned UI with enhanced functionality
 + Implemented automatic saving when closing menus
 + New Settings Menu was added to the Main UI (Cog Icon), replaces the hamburger menu
 + Added 2 more copy options "Title Only" and "Key Only"
@@ -48,11 +48,11 @@ UI/UX Improvements:
 * Improved the speed of the hide and show keys function
 * Moved change password button to the new Settings Menu
 * Selected cell now selects the entire row instead of a single cell
-* Right click menu and button shaped menus (QMenu) now use groupbox background color
+* Right click menu and button shaped menus (QMenu) now use group box background color
 * Improved notification system for all user actions
 * Streamlined message dialogs and right-click menu organization
 * Reduced the Button height from 32px to 30px
-* New minium and maximum limits for a couple of Theme sliders
+* New minimum and maximum limits for a couple of Theme sliders
 * Scrollbar slider names have been changed to better reflect what they control
 * Updated PySide6 to version 6.9.0
 
@@ -70,7 +70,7 @@ Theme System Enhancements:
 
 Bug Fixes:
 * Corrected typo in game removal confirmation message
-* Resolved performance degradation in Theme Menu sliders (when continusly reopening the Theme Menu)
+* Resolved performance degradation in Theme Menu sliders (when continually reopening the Theme Menu)
 * Fixed update branch selection inconsistencies
 * Fixed vertical gaps between elements in Theme Menu when using the search bar
 
@@ -80,7 +80,7 @@ Removals:
 - Removed "Save", "Cancel" buttons from Category menu
 - Removed number indexes from the Category Menu and Edit Games Menu
 - Removed built-in color customization menu
-- Removed interactables border size related code
+- Removed interactable border size related code
   
 ___
 0.8.0-beta
