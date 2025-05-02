@@ -16,6 +16,7 @@ from packaging.version import parse
 from Icons import REFRESH_ICON
 from Themes import Theme
 from UI_Handler import apply_merged_edges
+import re
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -556,8 +557,9 @@ class UpdateDialog(QDialog):
     
     def handle_changelog_response(self, changelog_text):
         html_lines = []
+        version_pattern = re.compile(r"^\d+\.\d+\.\d+")
         for line in changelog_text.split('\n'):
-            if line.startswith("0."):
+            if version_pattern.match(line):
                 html_lines.append(f"<h3>{line}</h3>")
             elif line.startswith("+"):
                 html_lines.append(f"<p><span style='color: green;'><b>+</b></span> {line[2:]}</p>")
