@@ -127,7 +127,7 @@ class EditGameDialog(QDialog):
         CATEGORY_HEADER_WIDTH = 140
 
         for i, text in enumerate(headers):
-            label = QLabel(text)
+            label = QLabel(text, fixedHeight=TITLE_HEIGHT)
             label.setObjectName("Title")
             label.setAlignment(Qt.AlignCenter)
             # Set fixed sizes for specific headers
