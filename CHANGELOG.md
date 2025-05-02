@@ -1,5 +1,4 @@
-2.0.0-beta
-(SteamAPI and UI Overhaul)
+2.0.0-beta (SteamAPI and UI Overhaul)
 * Probably missed a couple things that I changed but oh well, here are the ones that I remember:
 
 Data Management: 
