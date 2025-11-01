@@ -1,18 +1,17 @@
-### I've started working on SteamKM2 (Still very W.I.P) ###
-A couple of cool features in the new app (which are already implemented):
-- **Game Card Entries**: Brand new game card design for game entries which also support different layout options (**grid**, **list**).
-- **Moar Keys**: A ton of new key formats are supported now: Steam, EA, Ubisoft etc... (doesn't even have to be game/platform specific key, write whatever you want in the key line).
-- **Tags**: Add multiple tags (previously known as categories) to a single game entry, and later on use the tag filters section on the home page to easily find games that match your selected tags.
+### I've started working on SteamKM2, here are some of the differences between the OG and the new one ###
+- **Game Cards**: New game card design for the game library, which support different layout options (**grid**, **list**).
+- **Steamless Games**: A ton of new key formats are supported now: Steam, EA, Ubisoft etc... Doesn't even have to be game/platform specific key, write whatever you want in the key line.
+- **Tags**: Add multiple tags (previously known as categories) to a single game, and later on use the powerful tag filters feature to easily find games that match your filters.
 - **Page System**: Brand new page logic, instead of opening gazillion dialog windows, you can now navigate pages with the new page selector bar. Pages are also preserved, so if you were editing a theme and accidentally (or intentionally) clicked on another page, then you can always just reopen that page and continue where you left off.
-- **Movable Page Selector Bar**: Move the page selector bar to the left, top, right, bottom (as in the picture) edge of the window. (I really need to come up with a better name for it other than "Page Selector Bar")
+- **Movable Page Navigation Bar**: Move the page navigation bar to the left, top, right, bottom edge of the window.
 - **Custom Named Themes**: You can now have unlimited themes with custom names, you can even overwrite the built-in theme colors if you want to. No restrictions.
 - **Animated Gradient Bar**: Color customizable central animated gradient bar. Doesn't do anything special, it just looks fancy.
 
-<img width="1950" height="1199" alt="steamkm2" src="https://github.com/user-attachments/assets/041ca622-33a0-4d1f-bcb4-c45bee021dc1" />
+<img width="1943" height="1197" alt="image" src="https://github.com/user-attachments/assets/aa1fb977-3519-40b0-9598-91cbb2a807f2" />
 
 
 ---
-### SteamKM1 Update 2.0.0, with tons of changes + UI overhaul! ###
+### SteamKM1 V2.0.0, with tons of changes + UI overhaul! ###
 
 ### Do you have excess amount of duplicate Steam keys? Fear not, as this program was made for you and me!
 SteamKM (Steam Key Manager) is a hobby project which resolves my own duplicate key problem, you can even cry at the amount of duplicate keys thanks to the built-in key counter 😿. 
