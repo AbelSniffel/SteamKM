@@ -1,4 +1,7 @@
-### I've started working on SteamKM2, here are some of the differences between the OG and the new one ###
+# UniKM is out! https://github.com/AbelSniffel/UniKM
+### For migration info from SteamKM1 to UniKM, please open the UniKM Github page and scroll to the bottom.
+
+### Some key differences between SteamKM1 and SteamKM2/UniKM
 - **Game Cards**: New game card design for the game library, which support different layout options (**grid**, **list**).
 - **Steamless Games**: A ton of new key formats are supported now: Steam, EA, Ubisoft etc... Doesn't even have to be game/platform specific key, write whatever you want in the key line.
 - **Tags**: Add multiple tags (previously known as categories) to a single game, and later on use the powerful tag filters feature to easily find games that match your filters.
@@ -6,12 +9,8 @@
 - **Movable Page Navigation Bar**: Move the page navigation bar to the left, top, right, bottom edge of the window.
 - **Custom Named Themes**: You can now have unlimited themes with custom names, you can even overwrite the built-in theme colors if you want to. No restrictions.
 - **Animated Gradient Bar**: Color customizable central animated gradient bar. Doesn't do anything special, it just looks fancy.
-
-<img width="1943" height="1197" alt="image" src="https://github.com/user-attachments/assets/aa1fb977-3519-40b0-9598-91cbb2a807f2" />
-
-
+  
 ---
-### SteamKM1 V2.0.0, with tons of changes + UI overhaul! ###
 
 ### Do you have excess amount of duplicate Steam keys? Fear not, as this program was made for you and me!
 SteamKM (Steam Key Manager) is a hobby project which resolves my own duplicate key problem, you can even cry at the amount of duplicate keys thanks to the built-in key counter 😿. 
@@ -49,7 +48,7 @@ SteamKM (Steam Key Manager) is a hobby project which resolves my own duplicate k
 - Cross-Platform Compatibility: Built with PySide6 and Python for Windows and Linux users. (Linux is WIP but usable in its current form)
 
 
-### **Additional Pictures**
+### **Pictures**
 Dark Theme (Alternative UI Layout) | Dark Theme (Unmerged Buttons)
 :-------------------------:|:-------------------------:
 | ![Dark - Alt](https://github.com/user-attachments/assets/11dc21d5-f45e-45c1-a5f3-f9670628f341) | ![Dark - Unmerged](https://github.com/user-attachments/assets/376a0cd0-044d-4a56-b938-0943483e803e) |
